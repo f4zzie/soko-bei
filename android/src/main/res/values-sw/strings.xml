@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kiswahili translations: machine-assisted draft, needs review by a native speaker. -->
+<resources>
+    <string name="app_name">Soko Bei</string>
+
+    <string name="tab_markets">Masoko</string>
+    <string name="tab_my_reports">Ripoti zangu</string>
+    <string name="tab_settings">Mipangilio</string>
+    <string name="back">Rudi</string>
+    <string name="retry">Jaribu tena</string>
+    <string name="cancel">Ghairi</string>
+    <string name="loading">Inapakia…</string>
+    <string name="continue_label">Endelea</string>
+    <string name="not_now">Sio sasa</string>
+
+    <string name="welcome_title">Karibu Soko Bei</string>
+    <string name="welcome_body">Angalia bei za leo za mazao sokoni, na usaidie wengine kwa kuripoti bei unazoziona. Bei zinaonyeshwa kwa kilo ili iwe rahisi kulinganisha.</string>
+    <string name="language_label">Lugha</string>
+    <string name="language_english">English</string>
+    <string name="language_swahili">Kiswahili</string>
+    <string name="consent_body">Unaporipoti bei tunahifadhi soko, bidhaa, bei na wakati, pamoja na namba yako ya simu ili kuzuia ujumbe taka. Namba yako ya simu haionyeshwi kwa watu wengine. Unaweza kufuta akaunti yako na data zako wakati wowote kwenye Mipangilio.</string>
+    <string name="consent_checkbox">Nakubali ripoti zangu za bei na namba yangu ya simu zihifadhiwe kama ilivyoelezwa.</string>
+
+    <string name="login">Ingia</string>
+    <string name="login_title">Ingia kwa simu yako</string>
+    <string name="login_phone_body">Weka namba yako ya simu ya Kenya. Tutakutumia msimbo wa tarakimu 6.</string>
+    <string name="login_code_body">Weka msimbo wa tarakimu 6 tuliotuma kwenye simu yako.</string>
+    <string name="login_why">Unahitaji kuingia ili kutuma ripoti tu. Unaweza kuangalia bei bila kuingia. Ripoti ulizohifadhi kabla ya kuingia zitatumwa baada ya kuingia.</string>
+    <string name="phone_label">Namba ya simu</string>
+    <string name="phone_hint">0712345678</string>
+    <string name="code_label">Msimbo wa tarakimu 6</string>
+    <string name="send_code">Tuma msimbo</string>
+    <string name="verify">Thibitisha</string>
+    <string name="change_number">Tumia namba nyingine</string>
+    <string name="error_invalid_phone">Namba hii ya simu haionekani sahihi. Tumia namba kama 0712345678.</string>
+    <string name="error_invalid_code">Msimbo huu si sahihi. Tafadhali angalia na ujaribu tena.</string>
+    <string name="error_network">Hakuna mtandao. Tafadhali jaribu tena ukiwa na intaneti.</string>
+    <string name="error_rate_limited">Umejaribu mara nyingi sana. Tafadhali subiri dakika chache kisha ujaribu tena.</string>
+    <string name="error_server">Kuna hitilafu upande wetu. Tafadhali jaribu tena baadaye.</string>
+
+    <string name="home_title">Bei za leo</string>
+    <string name="market">Soko</string>
+    <string name="commodity">Bidhaa</string>
+    <string name="report_price">Ripoti bei</string>
+    <string name="prices_last_updated">Bei: %1$s</string>
+    <string name="never_updated">bado hazijapakuliwa</string>
+    <string name="updated_just_now">imesasishwa sasa hivi</string>
+    <plurals name="updated_minutes_ago">
+        <item quantity="one">imesasishwa dakika %d iliyopita</item>
+        <item quantity="other">imesasishwa dakika %d zilizopita</item>
+    </plurals>
+    <plurals name="updated_hours_ago">
+        <item quantity="one">imesasishwa saa %d iliyopita</item>
+        <item quantity="other">imesasishwa saa %d zilizopita</item>
+    </plurals>
+    <plurals name="updated_days_ago">
+        <item quantity="one">imesasishwa siku %d iliyopita</item>
+        <item quantity="other">imesasishwa siku %d zilizopita</item>
+    </plurals>
+    <string name="no_prices_yet">Bado hakuna bei zilizohifadhiwa za soko hili.</string>
+    <string name="banner_offline">Huna mtandao. Zinaonyeshwa bei zilizohifadhiwa kwenye simu yako.</string>
+    <string name="banner_server_error">Imeshindikana kusasisha bei. Zinaonyeshwa bei zilizohifadhiwa kwenye simu yako.</string>
+    <string name="median_today">Bei ya kawaida leo (wastani wa kati)</string>
+    <string name="last_price">Ripoti ya hivi karibuni</string>
+    <string name="reports_label">Ripoti za leo</string>
+    <string name="kes_per_kg">KES %1$s kwa kilo</string>
+    <string name="no_price">Bado hakuna bei</string>
+    <string name="view_trend">Angalia mwenendo wa bei</string>
+
+    <string name="cheapest_first">Bidhaa hii katika masoko yote, kuanzia ya bei nafuu zaidi.</string>
+
+    <string name="trend">Mwenendo wa bei</string>
+    <string name="days_fmt">Siku %1$d</string>
+    <string name="no_trend_data">Hakuna data ya mwenendo kwa kipindi hiki.</string>
+    <string name="chart_legend">Mstari: bei ya kawaida (wastani wa kati) kwa kilo. Eneo lenye kivuli: bei ya chini hadi ya juu zaidi iliyoripotiwa.</string>
+    <string name="chart_description">Mwenendo wa bei kwa siku %1$d. Ya chini zaidi %2$s, ya juu zaidi %3$s, wastani wa hivi karibuni %4$s shilingi za Kenya kwa kilo.</string>
+    <string name="latest_median">Bei ya kawaida ya hivi karibuni</string>
+    <string name="period_low">Ya chini zaidi katika kipindi</string>
+    <string name="period_high">Ya juu zaidi katika kipindi</string>
+
+    <string name="grade">Daraja</string>
+    <string name="unit">Kipimo</string>
+    <string name="unit_with_kg">%1$s (kilo %2$s)</string>
+    <string name="quantity">Kiasi</string>
+    <string name="price_kes">Bei uliyoona (KES)</string>
+    <string name="error_quantity">Weka namba kubwa kuliko 0.</string>
+    <string name="error_price">Weka shilingi nzima kubwa kuliko 0.</string>
+    <string name="price_per_kg_title">Bei kwa kilo</string>
+    <string name="price_per_kg_placeholder">Weka bei na kiasi</string>
+    <string name="offline_note">Ripoti yako huhifadhiwa kwanza kwenye simu yako na hutumwa yenyewe ukiwa na intaneti.</string>
+    <string name="submit_report">Hifadhi ripoti</string>
+
+    <string name="my_reports">Ripoti zangu</string>
+    <string name="no_reports_yet">Bado hujaripoti bei yoyote.</string>
+    <string name="status_pending">Inasubiri</string>
+    <string name="status_synced">Imetumwa</string>
+    <string name="status_rejected">Imekataliwa</string>
+    <string name="status_expired">Imekwisha muda</string>
+    <string name="report_line">%1$s %2$s kwa KES %3$d</string>
+    <string name="rejected_reason">Sababu: %1$s</string>
+    <string name="pending_explain">Inasubiri kutumwa. Hii hutokea yenyewe ukiwa na mtandao na umeingia.</string>
+    <string name="expired_explain">Haikutumwa: ripoti ilikuwa na zaidi ya siku 14.</string>
+
+    <string name="settings">Mipangilio</string>
+    <string name="account">Akaunti</string>
+    <string name="logout">Toka</string>
+    <string name="not_logged_in">Hujaingia.</string>
+    <string name="delete_account">Futa akaunti yangu</string>
+    <string name="delete_account_hint">Hii inaondoa akaunti yako na ripoti zako kwenye seva zetu.</string>
+    <string name="delete_confirm_title">Futa akaunti yako?</string>
+    <string name="delete_confirm_body">Akaunti yako na ripoti zako zitafutwa. Hatua hii haiwezi kutenduliwa.</string>
+    <string name="delete_confirm_action">Futa</string>
+    <string name="version_fmt">Toleo %1$s</string>
+</resources>

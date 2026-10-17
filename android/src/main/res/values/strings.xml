@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Soko Bei</string>
+
+    <!-- Tabs / common -->
+    <string name="tab_markets">Markets</string>
+    <string name="tab_my_reports">My reports</string>
+    <string name="tab_settings">Settings</string>
+    <string name="back">Back</string>
+    <string name="retry">Try again</string>
+    <string name="cancel">Cancel</string>
+    <string name="loading">Loading…</string>
+    <string name="continue_label">Continue</string>
+    <string name="not_now">Not now</string>
+
+    <!-- Welcome / consent -->
+    <string name="welcome_title">Welcome to Soko Bei</string>
+    <string name="welcome_body">See today\'s market prices for farm produce, and help others by reporting the prices you see. Prices are shown per kilogram so they are easy to compare.</string>
+    <string name="language_label">Language</string>
+    <string name="language_english">English</string>
+    <string name="language_swahili">Kiswahili</string>
+    <string name="consent_body">When you report a price we store the market, the product, the price and the time, together with your phone number so we can prevent spam. Your phone number is never shown to other people. You can delete your account and data at any time in Settings.</string>
+    <string name="consent_checkbox">I agree that my price reports and phone number are stored as described.</string>
+
+    <!-- Login -->
+    <string name="login">Log in</string>
+    <string name="login_title">Log in with your phone</string>
+    <string name="login_phone_body">Enter your Kenyan phone number. We will send you a 6-digit code.</string>
+    <string name="login_code_body">Enter the 6-digit code we sent to your phone.</string>
+    <string name="login_why">You only need to log in to send reports. You can look at prices without logging in. Reports you save before logging in are sent after you log in.</string>
+    <string name="phone_label">Phone number</string>
+    <string name="phone_hint">0712345678</string>
+    <string name="code_label">6-digit code</string>
+    <string name="send_code">Send code</string>
+    <string name="verify">Verify</string>
+    <string name="change_number">Use a different number</string>
+    <string name="error_invalid_phone">That phone number does not look right. Use a number like 0712345678.</string>
+    <string name="error_invalid_code">That code is not correct. Please check and try again.</string>
+    <string name="error_network">No internet connection. Please try again when you are online.</string>
+    <string name="error_rate_limited">Too many tries. Please wait a few minutes and try again.</string>
+    <string name="error_server">Something went wrong on our side. Please try again later.</string>
+
+    <!-- Home -->
+    <string name="home_title">Prices today</string>
+    <string name="market">Market</string>
+    <string name="commodity">Product</string>
+    <string name="report_price">Report a price</string>
+    <string name="prices_last_updated">Prices %1$s</string>
+    <string name="never_updated">not downloaded yet</string>
+    <string name="updated_just_now">updated just now</string>
+    <plurals name="updated_minutes_ago">
+        <item quantity="one">updated %d minute ago</item>
+        <item quantity="other">updated %d minutes ago</item>
+    </plurals>
+    <plurals name="updated_hours_ago">
+        <item quantity="one">updated %d hour ago</item>
+        <item quantity="other">updated %d hours ago</item>
+    </plurals>
+    <plurals name="updated_days_ago">
+        <item quantity="one">updated %d day ago</item>
+        <item quantity="other">updated %d days ago</item>
+    </plurals>
+    <string name="no_prices_yet">No prices saved for this market yet.</string>
+    <string name="banner_offline">You are offline. Showing the prices saved on your phone.</string>
+    <string name="banner_server_error">Could not refresh prices. Showing the prices saved on your phone.</string>
+    <string name="median_today">Typical price today (median)</string>
+    <string name="last_price">Latest report</string>
+    <string name="reports_label">Reports today</string>
+    <string name="kes_per_kg">KES %1$s per kg</string>
+    <string name="no_price">No price yet</string>
+    <string name="view_trend">View price trend</string>
+
+    <!-- Commodity -->
+    <string name="cheapest_first">Same product in all markets, cheapest first.</string>
+
+    <!-- Trend -->
+    <string name="trend">Price trend</string>
+    <string name="days_fmt">%1$d days</string>
+    <string name="no_trend_data">No trend data for this period.</string>
+    <string name="chart_legend">Line: typical price (median) per kg. Shaded area: lowest to highest price reported.</string>
+    <string name="chart_description">Price trend for %1$d days. Lowest %2$s, highest %3$s, latest median %4$s Kenya shillings per kilogram.</string>
+    <string name="latest_median">Latest typical price</string>
+    <string name="period_low">Lowest in period</string>
+    <string name="period_high">Highest in period</string>
+
+    <!-- Report form -->
+    <string name="grade">Grade</string>
+    <string name="unit">Unit</string>
+    <string name="unit_with_kg">%1$s (%2$s kg)</string>
+    <string name="quantity">Quantity</string>
+    <string name="price_kes">Price you saw (KES)</string>
+    <string name="error_quantity">Enter a number greater than 0.</string>
+    <string name="error_price">Enter a whole number of shillings greater than 0.</string>
+    <string name="price_per_kg_title">Price per kilogram</string>
+    <string name="price_per_kg_placeholder">Enter the price and quantity</string>
+    <string name="offline_note">Your report is saved on your phone first and sent automatically when you have internet.</string>
+    <string name="submit_report">Save report</string>
+
+    <!-- My reports -->
+    <string name="my_reports">My reports</string>
+    <string name="no_reports_yet">You have not reported any prices yet.</string>
+    <string name="status_pending">Pending</string>
+    <string name="status_synced">Synced</string>
+    <string name="status_rejected">Rejected</string>
+    <string name="status_expired">Expired</string>
+    <string name="report_line">%1$s %2$s for KES %3$d</string>
+    <string name="rejected_reason">Reason: %1$s</string>
+    <string name="pending_explain">Waiting to be sent. This happens automatically when you are online and logged in.</string>
+    <string name="expired_explain">Not sent: the report was more than 14 days old.</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="account">Account</string>
+    <string name="logout">Log out</string>
+    <string name="not_logged_in">You are not logged in.</string>
+    <string name="delete_account">Delete my account</string>
+    <string name="delete_account_hint">This removes your account and your reports from our servers.</string>
+    <string name="delete_confirm_title">Delete your account?</string>
+    <string name="delete_confirm_body">Your account and your reports will be deleted. This cannot be undone.</string>
+    <string name="delete_confirm_action">Delete</string>
+    <string name="version_fmt">Version %1$s</string>
+</resources>

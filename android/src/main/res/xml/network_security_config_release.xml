@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RELEASE: HTTPS only. Cleartext is forbidden for every host. Checked by verifyReleaseNetworkSecurity and NetworkSecurityConfigTest. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

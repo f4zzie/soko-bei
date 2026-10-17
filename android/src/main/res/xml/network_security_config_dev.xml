@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DEBUG and STAGING builds only. Everything is HTTPS except these two development hosts:
+     localhost (phone + `adb reverse tcp:8080 tcp:8080`) and 10.0.2.2 (emulator -> host machine). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

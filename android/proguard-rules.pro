@@ -1,0 +1,6 @@
+-keepattributes *Annotation*, InnerClasses
+-dontwarn org.slf4j.**
+-dontwarn io.ktor.**
+-keep,includedescriptorclasses class ke.sokobei.**$$serializer { *; }
+-keepclassmembers class ke.sokobei.** { *** Companion; }
+-keepclasseswithmembers class ke.sokobei.** { kotlinx.serialization.KSerializer serializer(...); }

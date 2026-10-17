@@ -1,0 +1,428 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "d9b03e0b16552ac8c264124910771b25",
+    "entities": [
+      {
+        "tableName": "markets",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`marketId` TEXT NOT NULL, `name` TEXT NOT NULL, `county` TEXT NOT NULL, `lat` REAL, `lng` REAL, PRIMARY KEY(`marketId`))",
+        "fields": [
+          {
+            "fieldPath": "marketId",
+            "columnName": "marketId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "county",
+            "columnName": "county",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lat",
+            "columnName": "lat",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "lng",
+            "columnName": "lng",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "marketId"
+          ]
+        }
+      },
+      {
+        "tableName": "commodities",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`commodityId` TEXT NOT NULL, `nameEn` TEXT NOT NULL, `nameSw` TEXT NOT NULL, `defaultUnit` TEXT NOT NULL, `grades` TEXT NOT NULL, `units` TEXT NOT NULL, PRIMARY KEY(`commodityId`))",
+        "fields": [
+          {
+            "fieldPath": "commodityId",
+            "columnName": "commodityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameEn",
+            "columnName": "nameEn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameSw",
+            "columnName": "nameSw",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "defaultUnit",
+            "columnName": "defaultUnit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "grades",
+            "columnName": "grades",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "units",
+            "columnName": "units",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "commodityId"
+          ]
+        }
+      },
+      {
+        "tableName": "market_prices",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`marketId` TEXT NOT NULL, `commodityId` TEXT NOT NULL, `commodityNameEn` TEXT NOT NULL, `commodityNameSw` TEXT NOT NULL, `grade` TEXT NOT NULL, `medianTodayPerKg` TEXT, `lastPricePerKg` TEXT, `reportsToday` INTEGER NOT NULL, `updatedAtMs` INTEGER NOT NULL, PRIMARY KEY(`marketId`, `commodityId`, `grade`))",
+        "fields": [
+          {
+            "fieldPath": "marketId",
+            "columnName": "marketId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "commodityId",
+            "columnName": "commodityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "commodityNameEn",
+            "columnName": "commodityNameEn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "commodityNameSw",
+            "columnName": "commodityNameSw",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "medianTodayPerKg",
+            "columnName": "medianTodayPerKg",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastPricePerKg",
+            "columnName": "lastPricePerKg",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reportsToday",
+            "columnName": "reportsToday",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtMs",
+            "columnName": "updatedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "marketId",
+            "commodityId",
+            "grade"
+          ]
+        }
+      },
+      {
+        "tableName": "commodity_prices",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`commodityId` TEXT NOT NULL, `marketId` TEXT NOT NULL, `marketName` TEXT NOT NULL, `county` TEXT NOT NULL, `grade` TEXT NOT NULL, `medianTodayPerKg` TEXT, `lastPricePerKg` TEXT, `reportsToday` INTEGER NOT NULL, `updatedAtMs` INTEGER NOT NULL, PRIMARY KEY(`commodityId`, `marketId`, `grade`))",
+        "fields": [
+          {
+            "fieldPath": "commodityId",
+            "columnName": "commodityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "marketId",
+            "columnName": "marketId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "marketName",
+            "columnName": "marketName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "county",
+            "columnName": "county",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "medianTodayPerKg",
+            "columnName": "medianTodayPerKg",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastPricePerKg",
+            "columnName": "lastPricePerKg",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reportsToday",
+            "columnName": "reportsToday",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtMs",
+            "columnName": "updatedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "commodityId",
+            "marketId",
+            "grade"
+          ]
+        }
+      },
+      {
+        "tableName": "trend_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`commodityId` TEXT NOT NULL, `marketId` TEXT NOT NULL, `days` INTEGER NOT NULL, `grade` TEXT NOT NULL, `json` TEXT NOT NULL, `fetchedAtMs` INTEGER NOT NULL, PRIMARY KEY(`commodityId`, `marketId`, `days`, `grade`))",
+        "fields": [
+          {
+            "fieldPath": "commodityId",
+            "columnName": "commodityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "marketId",
+            "columnName": "marketId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "days",
+            "columnName": "days",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "json",
+            "columnName": "json",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchedAtMs",
+            "columnName": "fetchedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "commodityId",
+            "marketId",
+            "days",
+            "grade"
+          ]
+        }
+      },
+      {
+        "tableName": "cache_meta",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`key` TEXT NOT NULL, `updatedAtMs` INTEGER NOT NULL, PRIMARY KEY(`key`))",
+        "fields": [
+          {
+            "fieldPath": "key",
+            "columnName": "key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtMs",
+            "columnName": "updatedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "key"
+          ]
+        }
+      },
+      {
+        "tableName": "pending_reports",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`reportId` TEXT NOT NULL, `reportedAtMs` INTEGER NOT NULL, `marketId` TEXT NOT NULL, `marketName` TEXT NOT NULL, `commodityId` TEXT NOT NULL, `commodityName` TEXT NOT NULL, `grade` TEXT NOT NULL, `unit` TEXT NOT NULL, `quantity` TEXT NOT NULL, `priceKes` INTEGER NOT NULL, `pricePerKg` TEXT, `status` TEXT NOT NULL, `rejectReason` TEXT, `attempts` INTEGER NOT NULL, `updatedAtMs` INTEGER NOT NULL, PRIMARY KEY(`reportId`))",
+        "fields": [
+          {
+            "fieldPath": "reportId",
+            "columnName": "reportId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reportedAtMs",
+            "columnName": "reportedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "marketId",
+            "columnName": "marketId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "marketName",
+            "columnName": "marketName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "commodityId",
+            "columnName": "commodityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "commodityName",
+            "columnName": "commodityName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unit",
+            "columnName": "unit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantity",
+            "columnName": "quantity",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "priceKes",
+            "columnName": "priceKes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pricePerKg",
+            "columnName": "pricePerKg",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rejectReason",
+            "columnName": "rejectReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "attempts",
+            "columnName": "attempts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtMs",
+            "columnName": "updatedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "reportId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pending_reports_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_reports_status` ON `${TABLE_NAME}` (`status`)"
+          },
+          {
+            "name": "index_pending_reports_reportedAtMs",
+            "unique": false,
+            "columnNames": [
+              "reportedAtMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_reports_reportedAtMs` ON `${TABLE_NAME}` (`reportedAtMs`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd9b03e0b16552ac8c264124910771b25')"
+    ]
+  }
+}
