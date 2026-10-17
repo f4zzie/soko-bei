@@ -1,0 +1,11 @@
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>{"ts":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}","level":"%level","logger":"%logger{36}","thread":"%thread","msg":"%replace(%msg){'"','\\"'}"}%n</pattern>
+    </encoder>
+  </appender>
+  <logger name="com.datastax.oss.driver" level="WARN"/>
+  <logger name="io.netty" level="WARN"/>
+  <logger name="org.testcontainers" level="INFO"/>
+  <root level="INFO"><appender-ref ref="STDOUT"/></root>
+</configuration>
