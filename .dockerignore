@@ -1,0 +1,13 @@
+# Docker context for the backend image. Anchored to the context root; only Gradle output directories are excluded.
+.git
+.gradle
+.kotlin
+.idea
+*.iml
+.env
+local.properties
+build
+shared/build
+backend/build
+android
+docs

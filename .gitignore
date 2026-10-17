@@ -1,0 +1,21 @@
+# Gradle / build output. Patterns are ANCHORED to the real output directories so that a source package
+# that happens to be called "build" can never be ignored by accident. Guarded by scripts/check-ignored-sources.sh.
+/.gradle/
+/build/
+/shared/build/
+/backend/build/
+/android/build/
+/.kotlin/
+/.last-test-results/
+
+# IDE
+.idea/
+*.iml
+
+# Local / secret files: never commit
+/local.properties
+.env
+*.keystore
+*.jks
+*.apk
+*.aab
