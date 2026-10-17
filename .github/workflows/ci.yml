@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# A newer push to the same branch/PR cancels the superseded run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Only used by the smoke job's docker compose stack. Dev values, never real secrets.
+  DEV_MODE: "true"
+
+jobs:
+  checks:
+    name: Ignored-source audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Shell syntax
+        run: for f in scripts/*.sh; do bash -n "$f"; done
+      - name: No source file may be ignored by .gitignore or .dockerignore
+        run: REQUIRE_DOCKER=1 scripts/check-ignored-sources.sh
+
+  backend:
+    name: Backend (shared + backend, Testcontainers)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v6
+      # Docker is preinstalled on ubuntu-latest; Testcontainers starts Cassandra 5.0 and MongoDB 8 from it.
+      - name: Build shared and check backend
+        run: ./gradlew :shared:build :backend:check --console=plain
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-reports
+          path: |
+            shared/build/reports/
+            shared/build/test-results/
+            backend/build/reports/
+            backend/build/test-results/
+          if-no-files-found: ignore
+
+  android:
+    name: Android (unit tests, debug, staging, release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Unit tests, lint, debug and staging APKs
+        run: ./gradlew :android:check :android:assembleDebug :android:assembleStaging --console=plain
+      # Release is built explicitly (with a real-looking https URL) so a broken R8 or release config fails CI.
+      - name: Release build with R8
+        run: ./gradlew :android:assembleRelease -PsokoReleaseBaseUrl=https://api.sokobei.test --console=plain
+      - name: Upload staging APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: soko-bei-staging-apk
+          path: android/build/outputs/apk/staging/android-staging.apk
+          if-no-files-found: error
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-test-reports
+          path: |
+            android/build/reports/
+            android/build/test-results/
+          if-no-files-found: ignore
+
+  smoke:
+    name: Smoke test (docker compose)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start Cassandra, MongoDB and the backend (DEV_MODE=true, dev secrets only)
+        run: docker compose up -d --build
+      - name: Smoke test
+        run: scripts/smoke-test.sh
+      - name: Backend logs
+        if: failure()
+        run: docker compose logs backend
+      - name: Stop and remove volumes
+        if: always()
+        run: docker compose down -v
+
+  instrumented:
+    name: Android instrumented tests (emulator)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: AVD cache
+        id: avd-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-api34-x86_64-google_apis-pixel_5
+      - name: Create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: ./gradlew :android:connectedDebugAndroidTest --console=plain
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: instrumented-test-reports
+          path: |
+            android/build/reports/androidTests/
+            android/build/outputs/androidTest-results/
+          if-no-files-found: ignore
