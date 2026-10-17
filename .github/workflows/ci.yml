@@ -12,10 +12,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  # Only used by the smoke job's docker compose stack. Dev values, never real secrets.
-  DEV_MODE: "true"
-
 jobs:
   checks:
     name: Ignored-source audit
@@ -39,6 +35,9 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v6
+      # Gradle configures every module, including :android, even for backend-only tasks.
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
       # Docker is preinstalled on ubuntu-latest; Testcontainers starts Cassandra 5.0 and MongoDB 8 from it.
       - name: Build shared and check backend
         run: ./gradlew :shared:build :backend:check --console=plain
@@ -94,13 +93,14 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-      - name: Start Cassandra, MongoDB and the backend (DEV_MODE=true, dev secrets only)
-        run: docker compose up -d --build
+      # docker-compose.yml defaults to DEV_MODE=true and dev-only secrets; nothing real is used in CI.
+      - name: Start Cassandra, MongoDB and the backend
+        run: docker compose up -d --build --wait --wait-timeout 300
       - name: Smoke test
         run: scripts/smoke-test.sh
       - name: Backend logs
         if: failure()
-        run: docker compose logs backend
+        run: docker compose logs --no-color
       - name: Stop and remove volumes
         if: always()
         run: docker compose down -v
@@ -130,7 +130,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-api34-x86_64-google_apis-pixel_5
+          key: avd-${{ runner.os }}-api34-x86_64-google_apis-pixel_5-v1
       - name: Create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
@@ -139,6 +139,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_5
+          ram-size: 2048M
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
@@ -150,6 +151,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_5
+          ram-size: 2048M
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
