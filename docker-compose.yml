@@ -1,0 +1,64 @@
+services:
+  cassandra:
+    image: cassandra:5.0
+    container_name: soko-cassandra
+    environment:
+      CASSANDRA_CLUSTER_NAME: soko-bei
+      CASSANDRA_DC: datacenter1
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      MAX_HEAP_SIZE: ${CASSANDRA_MAX_HEAP:-768M}
+      HEAP_NEWSIZE: ${CASSANDRA_HEAP_NEWSIZE:-128M}
+    ports:
+      - "9042:9042"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+
+  mongodb:
+    image: mongo:8
+    container_name: soko-mongo
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' | grep -q 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: soko-backend
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-soko_bei}
+      CASSANDRA_CONTACT_POINTS: cassandra:9042
+      CASSANDRA_LOCAL_DC: datacenter1
+      CASSANDRA_KEYSPACE: ${CASSANDRA_KEYSPACE:-soko_bei}
+      CASSANDRA_REPLICATION: ${CASSANDRA_REPLICATION:-datacenter1:1}
+      DEV_MODE: ${DEV_MODE:-true}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-dev-only-secret}
+      OTP_SECRET: ${OTP_SECRET:-dev-only-otp-secret-change-me}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-dev-admin-token}
+      REPORT_MAX_AGE_DAYS: ${REPORT_MAX_AGE_DAYS:-14}
+      JAVA_OPTS: "-Xmx384m"
+    ports:
+      - "8080:8080"
+
+volumes:
+  cassandra-data:
+  mongo-data:
