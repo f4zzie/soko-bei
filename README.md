@@ -25,11 +25,13 @@ Traders and buyers report what a unit of a commodity (for example a crate of tom
 - [Testing and quality](#testing-and-quality)
 - [Project structure](#project-structure)
 - [Limitations and roadmap](#limitations-and-roadmap)
+
 ---
 
 ## Background
 
 Market prices in Kenya differ a lot between towns and days, and farmers and small traders rarely see them. Soko Bei collects them from the people at the market. Seeded markets: Wakulima and Marikiti (Nairobi), Kongowea (Mombasa), Kibuye (Kisumu), Nakuru Main Market. Seeded commodities: maize, dry beans, tomatoes, onions, Irish potatoes, cabbage, sukuma wiki, bananas, rice, carrots, named in English and Kiswahili.
+
 ---
 
 ## Features
@@ -46,6 +48,7 @@ Market prices in Kenya differ a lot between towns and days, and farmers and smal
 - Jetpack Compose UI with a Room cache and an outbound report queue.
 - WorkManager sync with retry; token refresh; Hilt injection; DataStore settings.
 - `debug`, `staging` and `release` build types; release is R8-minified and forbids cleartext HTTP.
+
 ---
 
 ## Screenshots
@@ -61,6 +64,7 @@ Taken from the debug build running on an Android emulator (API 34) against the c
 | ![My reports](docs/screenshots/my-reports.png) | ![Markets in Kiswahili](docs/screenshots/markets-sw.png) |
 
 More: [log in](docs/screenshots/login.png) · [settings](docs/screenshots/settings.png)
+
 ---
 
 ## Architecture
@@ -89,6 +93,7 @@ flowchart LR
 ```
 
 The backend runs its background jobs in the same process as the HTTP server. Jobs can be turned off with `JOBS_ENABLED=false`.
+
 ---
 
 ## Database design
@@ -132,6 +137,7 @@ This is stated in the header of `backend/src/main/resources/cql/V001__schema.cql
 - Writing a report is the only write that changes prices. Derived tables can be dropped and rebuilt without losing data.
 - **Conversion corrections policy:** a report keeps the `kg_per_unit`, `conversion_version` and `price_per_kg_kes` it was stored with, forever. Publishing a new `commodity_units` version (a higher `version` for the same commodity and unit) affects only reports submitted afterwards. Derived tables, including a full admin rebuild, aggregate each report's stored `price_per_kg_kes` and never recompute it from the current factor. Old and new reports of one unit are therefore deliberately not retro-corrected; if history must be restated, that is an explicit, separate data migration. A test covers this.
 - The derived tables are rebuilt with the admin endpoint described below.
+
 ---
 
 ## Getting started
@@ -236,6 +242,7 @@ Sources: `.env.example` (compose-level values), `backend/src/main/resources/appl
 Errors use the envelope `{"error": {"code", "message", "details"}}`.
 
 `GET /health` always returns a JSON body with a status per database and HTTP 200 only when both Cassandra and MongoDB answer (503 otherwise), for example `{"status":"ok","cassandra":"up","mongodb":"up","cassandra_version":"5.0.9"}`. While the JVM is still starting it is not listening at all, so the compose healthcheck polls `/health` and `--wait` only returns once the backend is ready.
+
 ---
 
 ## Testing and quality
@@ -266,6 +273,7 @@ A manual test for a real phone is in [`docs/device-test-checklist.md`](docs/devi
 - With `DEV_MODE=false` the backend refuses to start unless `JWT_SECRET` and `OTP_SECRET` are non-default and at least 32 characters (`StartupGuardTest`, 10 tests).
 - Release builds forbid cleartext HTTP (`NetworkSecurityConfigTest` and the `verifyReleaseNetworkSecurity` task); debug and staging allow it only for `localhost` and `10.0.2.2`.
 - Phone numbers are never returned to other users, and account deletion clears the Cassandra `user_id` references and the MongoDB documents.
+
 ---
 
 ## Project structure
@@ -283,6 +291,7 @@ docker-compose.yml       Cassandra 5.0, MongoDB 8, backend
 .github/workflows/       ci.yml
 PROGRESS.md, DECISIONS.md   what was verified, and why things are the way they are
 ```
+
 ---
 
 ## Limitations and roadmap
