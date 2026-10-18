@@ -1,7 +1,6 @@
 # 🛒 Soko Bei: crowdsourced market prices for Kenya
 
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
-<!-- OWNER/REPO: this repository has no `origin` remote yet, so the badge cannot resolve. Replace with the output of `git remote get-url origin` once one exists. -->
+[![CI](https://github.com/f4zzie/soko-bei/actions/workflows/ci.yml/badge.svg)](https://github.com/f4zzie/soko-bei/actions/workflows/ci.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-Ktor%203%20%7C%20Compose-7f52ff)
 ![Cassandra](https://img.shields.io/badge/Cassandra-5.0-1287b1)
 ![MongoDB](https://img.shields.io/badge/MongoDB-8-47a248)
