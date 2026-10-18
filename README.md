@@ -11,6 +11,7 @@ Traders and buyers report what a unit of a commodity (for example a crate of tom
 ![Soko Bei demo](docs/screenshots/demo.gif)
 
 **Try it in one command** (Docker): `docker compose up -d --build --wait`, then `curl -s http://localhost:8080/health`. In dev mode the OTP code `000000` is accepted. Run `scripts/smoke-test.sh` for an end-to-end check.
+
 ---
 
 ## Contents
