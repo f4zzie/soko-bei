@@ -237,10 +237,10 @@ BASE_URL=http://localhost:8080 ADMIN_TOKEN=dev-admin-token scripts/smoke-test.sh
 | --- | --- | --- |
 | Backend unit + integration | 102 | Time, domain, validation, CQL splitter, startup guard, health report; integration tests use Testcontainers (Cassandra 5.0, MongoDB 8) or, with `SOKO_TEST_CASSANDRA=host:port` and `SOKO_TEST_MONGO=mongodb://host:port`, existing servers (each test gets its own keyspace and database) |
 | Android unit / Robolectric | 82 | ViewModels, Room DAOs, SyncWorker, report form, wire format, network security config |
-| Android instrumented | 20 | Room DAO 9, report form 3, SyncWorker 7, cleartext policy 1. Passed on a local API 34 emulator (`google_apis`, x86_64, headless); not yet run on a hosted runner |
+| Android instrumented | 20 | Room DAO 9, report form 3, SyncWorker 7, cleartext policy 1. Passed on a local API 34 emulator (`google_apis`, x86_64, headless) and on a GitHub-hosted runner |
 | Compose + smoke test | all steps | `docker compose up -d --build --wait`, then `scripts/smoke-test.sh`: OTP login, consent, catalog, report (201, then identical resubmit 200), price reads, admin rebuild, logout, account deletion, old token rejected. OTP requests are rate limited, so repeat runs within 15 minutes may fail at the OTP step |
 | Android release / staging builds | n/a | `./gradlew :android:assembleStaging`; `./gradlew :android:assembleRelease -PsokoReleaseBaseUrl=https://host` (R8, keep rules in `android/proguard-rules.pro`) |
-| CI | 5 jobs | `.github/workflows/ci.yml`: `checks` (actionlint, shellcheck, ignore audit), `backend`, `android`, `smoke`, `instrumented`. See [Limitations](#limitations-and-roadmap) for its status |
+| CI | 5 jobs | `.github/workflows/ci.yml`: `checks` (actionlint, shellcheck, ignore audit), `backend`, `android`, `smoke`, `instrumented`. All five green on GitHub (run 39105149357) |
 
 A manual test for a real phone is in [`docs/device-test-checklist.md`](docs/device-test-checklist.md).
 
@@ -293,5 +293,5 @@ Kiswahili commodity names (`name_sw` in the seed: Mahindi, Maharagwe, Nyanya, Vi
 - SMS is not wired. The only OTP sender is a console sender, so codes appear in logs in dev mode.
 - No outlier filtering yet: a single bad report can move a median. Flags are stored (`flags_by_report`, `flags_by_user`) but not yet used when computing medians.
 - Not verified: no run on a physical phone (the device checklist is a procedure nobody has executed), the Android app has not been exercised against the live backend, and a build on a different machine has not been done.
-- CI: the GitHub Actions workflow has not been confirmed green on GitHub (this repository has no remote yet), and the instrumented job has not run on a hosted runner.
+- CI: all five jobs, including the emulator job, passed on GitHub's hosted runners in run 39105149357 (first push). Only that one run exists, so flakiness is unmeasured.
 - Kiswahili names and the placeholder unit conversions need native-speaker and field review.

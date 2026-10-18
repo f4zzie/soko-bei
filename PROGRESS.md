@@ -37,7 +37,7 @@
 - Device checklist updated: airplane mode vs backend-unreachable cases separated, `adb reverse` and cleartext notes, quick-start commands; a subagent cross-checked it against the app code and corrected labels, sync rules, row counts and the refresh-failure step. It has NOT been run on a phone.
 
 ## Not verified
-- The GitHub Actions workflow itself on GitHub (no remote), including the instrumented job on a hosted runner; any run on a physical phone (device checklist); Android against the real backend.
+- Any run on a physical phone (device checklist); Android against the real backend.
 - A build on a different machine.
 - Kiswahili strings need native-speaker review; seed unit conversions are placeholders.
 
@@ -48,3 +48,4 @@
 - README rewritten in the structure of the author's agri_app README (no screenshots section: none exist). Tests table, instrumented command, CI row, known limitations and verification status updated to match this file. A subagent fact-check found two inaccuracies (refresh tokens do not rotate; `SMS_PROVIDER` missing from the env table); both fixed. All pinned GitHub Action tags were confirmed to exist via `gh api`.
 - Stale statements fixed: removed "fresh Gradle cache" from Not verified (kept "a different machine"), android/NOTES.md old 74-test line now marked as the initial run.
 - NOT done: push and `gh run watch`. This repository has no `origin` remote (`git remote -v` is empty), so there is no real repository path for the badge (still `OWNER/REPO`) and nothing could be pushed or watched. GitHub Actions remains unrun.
+- UPDATE: origin set to https://github.com/f4zzie/soko-bei.git (existing empty public repo) and `main` pushed. CI run https://github.com/f4zzie/soko-bei/actions/runs/39105149357 completed `success`: Android (unit, debug, staging, release), Backend (Testcontainers), Smoke (compose), Android instrumented (emulator), Ignored-source audit all green on the first run; nothing needed fixing. README badge now points at f4zzie/soko-bei. Still unverified: physical phone, Android against live backend, different machine; only one CI run exists.
