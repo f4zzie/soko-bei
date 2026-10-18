@@ -37,7 +37,7 @@
 - Device checklist updated: airplane mode vs backend-unreachable cases separated, `adb reverse` and cleartext notes, quick-start commands; a subagent cross-checked it against the app code and corrected labels, sync rules, row counts and the refresh-failure step. It has NOT been run on a phone.
 
 ## Not verified
-- Any run on a physical phone (device checklist); Android against the real backend.
+- Any run on a physical phone (device checklist); a systematic run of the device checklist against the live backend (one emulator walk-through was done for the screenshots).
 - A build on a different machine.
 - Kiswahili strings need native-speaker review; seed unit conversions are placeholders.
 
@@ -49,3 +49,7 @@
 - Stale statements fixed: removed "fresh Gradle cache" from Not verified (kept "a different machine"), android/NOTES.md old 74-test line now marked as the initial run.
 - NOT done: push and `gh run watch`. This repository has no `origin` remote (`git remote -v` is empty), so there is no real repository path for the badge (still `OWNER/REPO`) and nothing could be pushed or watched. GitHub Actions remains unrun.
 - UPDATE: origin set to https://github.com/f4zzie/soko-bei.git (existing empty public repo) and `main` pushed. CI run https://github.com/f4zzie/soko-bei/actions/runs/39105149357 completed `success`: Android (unit, debug, staging, release), Backend (Testcontainers), Smoke (compose), Android instrumented (emulator), Ignored-source audit all green on the first run; nothing needed fixing. README badge now points at f4zzie/soko-bei. Still unverified: physical phone, Android against live backend, different machine; only one CI run exists.
+
+## README sequence and screenshots
+- README reordered to the agri_app sequence: title, badges, tagline + demo.gif, one-command start, Contents, Background, Features, Screenshots, Architecture, Database design (ER diagram, Migrations table, Price model), Getting started (with Configuration and API), Testing and quality (with Security), Project structure, Limitations and roadmap.
+- Screenshots in `docs/screenshots/` (markets, compare-markets, trend, report-form, my-reports, markets-sw, settings, login, demo.gif): captured from the app on the API 34 emulator against `docker compose` with demo data. The flow was driven by hand through adb: consent, OTP login with 000000, market switch, commodity comparison, trend, a 1 crate x KES 4500 tomato report (shown as KES 75.00 per kg, then "Synced" in My reports), Settings, Kiswahili. Emulator and compose stack were shut down afterwards. This is also the first time the app was exercised against the live backend (report synced, prices displayed), though only on this one emulator walk-through.

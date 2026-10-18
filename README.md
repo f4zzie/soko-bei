@@ -8,30 +8,27 @@
 
 Traders and buyers report what a unit of a commodity (for example a crate of tomatoes) sold for at a named Kenyan market. The backend converts each report to a price per kilogram and publishes per-market and per-commodity figures: a daily median, the last reported price, the number of reports today, and a daily trend. The Android app is offline-first: reports are queued on the phone and synced when the network returns.
 
-**Try it in one command** (Docker): `docker compose up -d --build --wait`, then `curl -s http://localhost:8080/health`. In dev mode the OTP code `000000` is accepted. Run `scripts/smoke-test.sh` for an end-to-end check.
+![Soko Bei demo](docs/screenshots/demo.gif)
 
+**Try it in one command** (Docker): `docker compose up -d --build --wait`, then `curl -s http://localhost:8080/health`. In dev mode the OTP code `000000` is accepted. Run `scripts/smoke-test.sh` for an end-to-end check.
 ---
 
 ## Contents
 
 - [Background](#background)
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Architecture](#architecture)
-- [Data design](#data-design)
+- [Database design](#database-design)
 - [Getting started](#getting-started)
-- [Configuration](#configuration)
-- [API](#api)
 - [Testing and quality](#testing-and-quality)
 - [Project structure](#project-structure)
-- [Data to verify in the field](#data-to-verify-in-the-field)
 - [Limitations and roadmap](#limitations-and-roadmap)
-
 ---
 
 ## Background
 
 Market prices in Kenya differ a lot between towns and days, and farmers and small traders rarely see them. Soko Bei collects them from the people at the market. Seeded markets: Wakulima and Marikiti (Nairobi), Kongowea (Mombasa), Kibuye (Kisumu), Nakuru Main Market. Seeded commodities: maize, dry beans, tomatoes, onions, Irish potatoes, cabbage, sukuma wiki, bananas, rice, carrots, named in English and Kiswahili.
-
 ---
 
 ## Features
@@ -48,7 +45,21 @@ Market prices in Kenya differ a lot between towns and days, and farmers and smal
 - Jetpack Compose UI with a Room cache and an outbound report queue.
 - WorkManager sync with retry; token refresh; Hilt injection; DataStore settings.
 - `debug`, `staging` and `release` build types; release is R8-minified and forbids cleartext HTTP.
+---
 
+## Screenshots
+
+Taken from the debug build running on an Android emulator (API 34) against the compose backend, with a few demo reports submitted through the API. The prices are demo data, not real market prices.
+
+| Markets | Compare one product |
+| --- | --- |
+| ![Markets](docs/screenshots/markets.png) | ![Compare markets](docs/screenshots/compare-markets.png) |
+| **Price trend** | **Report a price (live price per kg)** |
+| ![Trend](docs/screenshots/trend.png) | ![Report form](docs/screenshots/report-form.png) |
+| **My reports (synced)** | **Kiswahili** |
+| ![My reports](docs/screenshots/my-reports.png) | ![Markets in Kiswahili](docs/screenshots/markets-sw.png) |
+
+More: [log in](docs/screenshots/login.png) · [settings](docs/screenshots/settings.png)
 ---
 
 ## Architecture
@@ -77,12 +88,11 @@ flowchart LR
 ```
 
 The backend runs its background jobs in the same process as the HTTP server. Jobs can be turned off with `JOBS_ENABLED=false`.
-
 ---
 
-## Data design
+## Database design
 
-Cassandra holds all price data, MongoDB holds accounts and credentials.
+Cassandra holds all price data, MongoDB holds accounts and credentials. The tables are designed one per query (no secondary indexes, no `ALLOW FILTERING`).
 
 ```mermaid
 erDiagram
@@ -101,6 +111,17 @@ erDiagram
 - **Cassandra** (keyspace `soko_bei`, one table per query, no secondary indexes or `ALLOW FILTERING`): the source of truth `reports_by_market_commodity`, its derived caches, the catalog, `flags_by_report`, `flags_by_user` and `job_state`. Migrations `V001`-`V004` live in `backend/src/main/resources/cql/` and are checksummed by `MigrationRunner`.
 - **MongoDB** (database `soko_bei`): `users` (unique index on `phone`), `otp_codes` and `refresh_tokens` (TTL indexes). Account deletion clears the user's reports' `user_id` in Cassandra and deletes the Mongo documents; it can be re-run after a crash.
 
+### Migrations
+
+The Cassandra schema is built by four forward-only CQL migrations, applied at startup by `MigrationRunner` and checksummed (a tampered applied file blocks startup):
+
+| # | Migration | What and why |
+| --- | --- | --- |
+| V001 | `schema` | Catalog, report tables, derived caches (`latest_price_by_*`, `daily_stats`), flags, job state, and the first version of the account tables. |
+| V002 | `seed` | Five markets, ten commodities (English and Kiswahili) and unit conversion factors; 26 are placeholders marked `verified = false`. |
+| V003 | `user_lookup_tables` | `refresh_tokens_by_user` and `flags_by_user` lookup tables. |
+| V004 | `users_moved_to_mongodb` | Accounts, OTP codes and refresh tokens moved to MongoDB; the superseded Cassandra tables are dropped. |
+
 ### Price model
 
 **`reports_by_market_commodity` is the only source of truth; every other price table (`latest_price_by_commodity`, `latest_price_by_market`, `daily_stats`) is a derived cache rebuildable from it.**
@@ -110,7 +131,6 @@ This is stated in the header of `backend/src/main/resources/cql/V001__schema.cql
 - Writing a report is the only write that changes prices. Derived tables can be dropped and rebuilt without losing data.
 - **Conversion corrections policy:** a report keeps the `kg_per_unit`, `conversion_version` and `price_per_kg_kes` it was stored with, forever. Publishing a new `commodity_units` version (a higher `version` for the same commodity and unit) affects only reports submitted afterwards. Derived tables, including a full admin rebuild, aggregate each report's stored `price_per_kg_kes` and never recompute it from the current factor. Old and new reports of one unit are therefore deliberately not retro-corrected; if history must be restated, that is an explicit, separate data migration. A test covers this.
 - The derived tables are rebuilt with the admin endpoint described below.
-
 ---
 
 ## Getting started
@@ -169,9 +189,7 @@ curl -sS -X POST \
 
 `from` and `to` are dates (`YYYY-MM-DD`, Africa/Nairobi days) and the range is inclusive. The rebuild recomputes `daily_stats` and the latest-price tables from `reports_by_market_commodity`.
 
----
-
-## Configuration
+### Configuration
 
 Sources: `.env.example` (compose-level values), `backend/src/main/resources/application.conf` (defaults and override names), and `docker-compose.yml` (what the backend container receives). Where the conf default and the compose default differ, both are shown.
 
@@ -202,9 +220,7 @@ Sources: `.env.example` (compose-level values), `backend/src/main/resources/appl
 | `SOKO_TEST_CASSANDRA` | unset | Test only: `host:port` of an external Cassandra for integration tests. Otherwise Testcontainers starts one |
 | `SOKO_TEST_MONGO` | unset | Test only: MongoDB URI of an external server (otherwise Testcontainers starts one) |
 
----
-
-## API
+### API
 
 | Area | Routes |
 | --- | --- |
@@ -219,7 +235,6 @@ Sources: `.env.example` (compose-level values), `backend/src/main/resources/appl
 Errors use the envelope `{"error": {"code", "message", "details"}}`.
 
 `GET /health` always returns a JSON body with a status per database and HTTP 200 only when both Cassandra and MongoDB answer (503 otherwise), for example `{"status":"ok","cassandra":"up","mongodb":"up","cassandra_version":"5.0.9"}`. While the JVM is still starting it is not listening at all, so the compose healthcheck polls `/health` and `--wait` only returns once the backend is ready.
-
 ---
 
 ## Testing and quality
@@ -244,6 +259,12 @@ BASE_URL=http://localhost:8080 ADMIN_TOKEN=dev-admin-token scripts/smoke-test.sh
 
 A manual test for a real phone is in [`docs/device-test-checklist.md`](docs/device-test-checklist.md).
 
+### Security
+
+- The admin API is closed unless `ADMIN_TOKEN` is set; the token is compared in constant time (SHA-256 digests) and an empty token returns 403 on every admin route.
+- With `DEV_MODE=false` the backend refuses to start unless `JWT_SECRET` and `OTP_SECRET` are non-default and at least 32 characters (`StartupGuardTest`, 10 tests).
+- Release builds forbid cleartext HTTP (`NetworkSecurityConfigTest` and the `verifyReleaseNetworkSecurity` task); debug and staging allow it only for `localhost` and `10.0.2.2`.
+- Phone numbers are never returned to other users, and account deletion clears the Cassandra `user_id` references and the MongoDB documents.
 ---
 
 ## Project structure
@@ -256,15 +277,23 @@ android/                 Compose app: Room cache, report queue, WorkManager sync
 android/src/androidTest/ instrumented tests
 shared/                  DTOs and constants shared with clients (ke.sokobei.shared)
 scripts/                 smoke-test.sh, check-ignored-sources.sh
-docs/                    device-test-checklist.md
+docs/                    device-test-checklist.md, screenshots/
 docker-compose.yml       Cassandra 5.0, MongoDB 8, backend
 .github/workflows/       ci.yml
 PROGRESS.md, DECISIONS.md   what was verified, and why things are the way they are
 ```
-
 ---
 
-## Data to verify in the field
+## Limitations and roadmap
+
+- Rate limiting for OTP requests and reports is in-memory and per instance. Running several backend instances multiplies the effective limits, and concurrent OTP verifies on different instances can race.
+- SMS is not wired. The only OTP sender is a console sender, so codes appear in logs in dev mode.
+- No outlier filtering yet: a single bad report can move a median. Flags are stored (`flags_by_report`, `flags_by_user`) but not yet used when computing medians.
+- Not verified: no run on a physical phone (the device checklist is a procedure nobody has executed), the Android app was only walked through once against the live backend (for the screenshots), not with the device checklist, and a build on a different machine has not been done.
+- CI: all five jobs, including the emulator job, passed on GitHub's hosted runners in run 39105149357 (first push). Only that one run exists, so flakiness is unmeasured.
+- Kiswahili names and the placeholder unit conversions need native-speaker and field review.
+
+### Data to verify in the field
 
 All unit conversion factors are placeholders except the `kg` unit, which is exact (`kg_per_unit = 1`). The source is `backend/src/main/resources/cql/V002__seed.cql`, which has 26 factors marked `verified = false`:
 
@@ -284,14 +313,3 @@ All unit conversion factors are placeholders except the `kg` unit, which is exac
 Until these are checked, per-kg prices for those units are only as good as the placeholder. Changing a factor creates a new `commodity_units` version; past reports keep the `conversion_version` they were stored with.
 
 Kiswahili commodity names (`name_sw` in the seed: Mahindi, Maharagwe, Nyanya, Vitunguu, Viazi mviringo, Kabichi, Sukuma wiki, Ndizi, Mchele, Karoti) need review by a native speaker before release.
-
----
-
-## Limitations and roadmap
-
-- Rate limiting for OTP requests and reports is in-memory and per instance. Running several backend instances multiplies the effective limits, and concurrent OTP verifies on different instances can race.
-- SMS is not wired. The only OTP sender is a console sender, so codes appear in logs in dev mode.
-- No outlier filtering yet: a single bad report can move a median. Flags are stored (`flags_by_report`, `flags_by_user`) but not yet used when computing medians.
-- Not verified: no run on a physical phone (the device checklist is a procedure nobody has executed), the Android app has not been exercised against the live backend, and a build on a different machine has not been done.
-- CI: all five jobs, including the emulator job, passed on GitHub's hosted runners in run 39105149357 (first push). Only that one run exists, so flakiness is unmeasured.
-- Kiswahili names and the placeholder unit conversions need native-speaker and field review.
