@@ -49,15 +49,11 @@ private fun StoredReport.toDto() = ReportDto(
 
 fun Route.apiRoutes(s: Services, metrics: PrometheusMeterRegistry) {
     get("/health") {
-        val version = runCatching { s.db.session.execute("SELECT release_version FROM system.local").one()?.getString(0) }
-        val mongoUp = runCatching { s.mongo.runCommand(org.bson.Document("ping", 1)) }.isSuccess
-        val body = buildJsonObject {
-            put("status", if (version.isSuccess && mongoUp) "ok" else "degraded")
-            put("cassandra", if (version.isSuccess) "up" else "down")
-            put("mongodb", if (mongoUp) "up" else "down")
-            version.getOrNull()?.let { put("cassandra_version", it) }
-        }
-        call.respond(if (version.isSuccess && mongoUp) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable, body)
+        val report = healthReport(
+            cassandraVersion = { s.db.session.execute("SELECT release_version FROM system.local").one()?.getString(0) },
+            mongoPing = { s.mongo.runCommand(org.bson.Document("ping", 1)) },
+        )
+        call.respond(report.httpStatus, report.body)
     }
     get("/metrics") { call.respondText(metrics.scrape(), ContentType.parse("text/plain; version=0.0.4")) }
 
@@ -226,3 +222,19 @@ private fun Route.adminRoutes(s: Services) = route("/admin") {
     }
 }
 
+
+class HealthReport(val httpStatus: HttpStatusCode, val body: kotlinx.serialization.json.JsonObject)
+
+/** Always yields a JSON body with a per-database status; 200 only when both stores answer, else 503. */
+suspend fun healthReport(cassandraVersion: suspend () -> String?, mongoPing: suspend () -> Unit): HealthReport {
+    val cassandra = runCatching { cassandraVersion() }
+    val mongoUp = runCatching { mongoPing() }.isSuccess
+    val healthy = cassandra.isSuccess && mongoUp
+    val body = buildJsonObject {
+        put("status", if (healthy) "ok" else "degraded")
+        put("cassandra", if (cassandra.isSuccess) "up" else "down")
+        put("mongodb", if (mongoUp) "up" else "down")
+        cassandra.getOrNull()?.let { put("cassandra_version", it) }
+    }
+    return HealthReport(if (healthy) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable, body)
+}

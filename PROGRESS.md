@@ -1,7 +1,7 @@
 # PROGRESS
 
 ## Verified by running
-- Phase 1 skeleton: `./gradlew build` passed (before Android was added). The compose stack was NOT started (no Docker access).
+- Phase 1 skeleton: `./gradlew build` passed (before Android was added). The compose stack was NOT started at that point (no Docker access; verified in the Docker gates below).
 - Phase 2: migrations V001-V004 apply from scratch, rerun is a no-op, tampered checksum blocks startup (MigrationIT 2/2).
 - Phase 3: domain unit tests pass.
 - Phases 4-6 (auth, write path, reads, jobs, rebuild, deletion, metrics): full backend suite = 84 tests, 0 failures, against native Cassandra 5.0.9 + MongoDB 8.0.34 (`SOKO_TEST_CASSANDRA=localhost:9042 SOKO_TEST_MONGO=mongodb://localhost:27017 ./gradlew :backend:test`, run from a mirror dir without :android).
@@ -38,5 +38,13 @@
 
 ## Not verified
 - The GitHub Actions workflow itself on GitHub (no remote), including the instrumented job on a hosted runner; any run on a physical phone (device checklist); Android against the real backend.
-- A build on a different machine / fresh Gradle cache (dependency caches were warm).
+- A build on a different machine.
 - Kiswahili strings need native-speaker review; seed unit conversions are placeholders.
+
+## Follow-up: README, /health startup race (latest round)
+- `/health` empty reply investigated with `curl -sv` right after `docker compose up -d`: for about a minute curl got "Empty reply from server" or "Connection reset by peer". Cause: docker-proxy accepts the connection while the JVM is still running migrations; the backend service had no healthcheck, so `--wait` returned early. The app never sent an empty body. Fix: compose healthcheck (`curl -sf http://localhost:8080/health`; curl confirmed present in the image) plus `healthReport()` extracted from the route (always JSON, per-database status, 200/503). New `HealthReportTest` (4 tests: both up, cassandra down, mongodb down, both down).
+- `./gradlew :backend:test --no-daemon --rerun-tasks` (Docker group, Testcontainers): BUILD SUCCESSFUL in 37m 37s, 102 tests, 0 failures, 0 skipped (15 suites). Android was not re-run this round (no Android changes; last result 82 unit tests, 20 instrumented).
+- `docker compose up -d --build --wait --wait-timeout 300` returned with all three services Healthy; the first `curl -i localhost:8080/health` right after returned `200 OK` with the JSON body; `scripts/smoke-test.sh` ALL STEPS PASSED; `docker compose down -v`.
+- README rewritten in the structure of the author's agri_app README (no screenshots section: none exist). Tests table, instrumented command, CI row, known limitations and verification status updated to match this file. A subagent fact-check found two inaccuracies (refresh tokens do not rotate; `SMS_PROVIDER` missing from the env table); both fixed. All pinned GitHub Action tags were confirmed to exist via `gh api`.
+- Stale statements fixed: removed "fresh Gradle cache" from Not verified (kept "a different machine"), android/NOTES.md old 74-test line now marked as the initial run.
+- NOT done: push and `gh run watch`. This repository has no `origin` remote (`git remote -v` is empty), so there is no real repository path for the badge (still `OWNER/REPO`) and nothing could be pushed or watched. GitHub Actions remains unrun.

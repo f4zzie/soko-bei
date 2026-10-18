@@ -23,7 +23,7 @@ AGP 9 worked as is; no fallback to AGP 8 was needed.
 4. Added SyncSchedulerTest (unique names, KEEP, APPEND_OR_REPLACE, CONNECTED).
 
 ## Verified
-`./gradlew :android:testDebugUnitTest :android:assembleDebug --no-daemon`: 74 tests, 0 failures (plus 2 SyncSchedulerTest run afterwards, passing). Covers ViewModels (fakes + Turbine), Room DAOs (Robolectric), ReportSyncer and SyncWorker over Ktor MockEngine (201/200, 409, 400, 500, IO, 429, 401->refresh->success, refresh rejected, expired), report form Compose UI test (live price/kg, offline submit), PriceMath/PricePreview.
+Initial run (current total is 82 unit tests, see PROGRESS.md): `./gradlew :android:testDebugUnitTest :android:assembleDebug --no-daemon`: 74 tests, 0 failures (plus 2 SyncSchedulerTest run afterwards, passing). Covers ViewModels (fakes + Turbine), Room DAOs (Robolectric), ReportSyncer and SyncWorker over Ktor MockEngine (201/200, 409, 400, 500, IO, 429, 401->refresh->success, refresh rejected, expired), report form Compose UI test (live price/kg, offline submit), PriceMath/PricePreview.
 
 ## Not verified
 - Instrumented tests exist now (see below), but there is still no manual run of the 8 screens, no real WorkManager scheduling (periodic/constraints) on a device, release build only checked statically (see Release build / R8), layouts only checked through Robolectric.

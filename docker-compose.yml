@@ -58,6 +58,13 @@ services:
       JAVA_OPTS: "-Xmx384m"
     ports:
       - "8080:8080"
+    healthcheck:
+      # 200 only when the JVM is listening and both databases answer (503 otherwise)
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
 volumes:
   cassandra-data:
