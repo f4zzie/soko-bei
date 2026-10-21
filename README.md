@@ -8,7 +8,7 @@
 
 Traders and buyers report what a unit of a commodity (for example a crate of tomatoes) sold for at a named Kenyan market. The backend converts each report to a price per kilogram and publishes per-market and per-commodity figures: a daily median, the last reported price, the number of reports today, and a daily trend. The Android app is offline-first: reports are queued on the phone and synced when the network returns.
 
-![Soko Bei demo](docs/screenshots/demo.gif)
+<img src="docs/screenshots/demo.gif" alt="Soko Bei demo" width="260">
 
 **Try it in one command** (Docker): `docker compose up -d --build --wait`, then `curl -s http://localhost:8080/health`. In dev mode the OTP code `000000` is accepted. Run `scripts/smoke-test.sh` for an end-to-end check.
 
@@ -57,11 +57,11 @@ Taken from the debug build running on an Android emulator (API 34) against the c
 
 | Markets | Compare one product |
 | --- | --- |
-| ![Markets](docs/screenshots/markets.png) | ![Compare markets](docs/screenshots/compare-markets.png) |
+| <img src="docs/screenshots/markets.png" alt="Markets" width="260"> | <img src="docs/screenshots/compare-markets.png" alt="Compare markets" width="260"> |
 | **Price trend** | **Report a price (live price per kg)** |
-| ![Trend](docs/screenshots/trend.png) | ![Report form](docs/screenshots/report-form.png) |
+| <img src="docs/screenshots/trend.png" alt="Trend" width="260"> | <img src="docs/screenshots/report-form.png" alt="Report form" width="260"> |
 | **My reports (synced)** | **Kiswahili** |
-| ![My reports](docs/screenshots/my-reports.png) | ![Markets in Kiswahili](docs/screenshots/markets-sw.png) |
+| <img src="docs/screenshots/my-reports.png" alt="My reports" width="260"> | <img src="docs/screenshots/markets-sw.png" alt="Markets in Kiswahili" width="260"> |
 
 More: [log in](docs/screenshots/login.png) · [settings](docs/screenshots/settings.png)
 
