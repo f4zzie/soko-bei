@@ -145,10 +145,11 @@ This is stated in the header of `backend/src/main/resources/cql/V001__schema.cql
 ### Option A: Cassandra, MongoDB and backend in Docker
 
 ```sh
-cp .env.example .env          # docker compose reads .env automatically
-docker compose up -d --build
+docker compose up -d --build --wait
 curl -s http://localhost:8080/health
 ```
+
+No `.env` file is needed: every value has a dev default in `docker-compose.yml`. To change one (for example `CASSANDRA_MAX_HEAP`), run `cp .env.example .env` first and edit it; compose reads `.env` automatically. `--wait` returns once all three services are healthy.
 
 Cassandra is published on `9042`, MongoDB on `27017`, the backend on `8080`. The compose file sets `DEV_MODE=true` by default, so OTP code `000000` is accepted. Do not use this in production.
 
@@ -258,12 +259,12 @@ BASE_URL=http://localhost:8080 ADMIN_TOKEN=dev-admin-token scripts/smoke-test.sh
 
 | Suite | Count | Notes |
 | --- | --- | --- |
-| Backend unit + integration | 102 | Time, domain, validation, CQL splitter, startup guard, health report; integration tests use Testcontainers (Cassandra 5.0, MongoDB 8) or, with `SOKO_TEST_CASSANDRA=host:port` and `SOKO_TEST_MONGO=mongodb://host:port`, existing servers (each test gets its own keyspace and database) |
+| Backend unit + integration | 103 | Time, domain, validation, CQL splitter, startup guard, health report, phone-number privacy; integration tests use Testcontainers (Cassandra 5.0, MongoDB 8) or, with `SOKO_TEST_CASSANDRA=host:port` and `SOKO_TEST_MONGO=mongodb://host:port`, existing servers (each test gets its own keyspace and database) |
 | Android unit / Robolectric | 82 | ViewModels, Room DAOs, SyncWorker, report form, wire format, network security config |
-| Android instrumented | 20 | Room DAO 9, report form 3, SyncWorker 7, cleartext policy 1. Passed on a local API 34 emulator (`google_apis`, x86_64, headless) and on a GitHub-hosted runner |
+| Android instrumented | 20 | Room DAO 9, report form 3, SyncWorker 7, cleartext policy 1. Passed on a local API 34 emulator (`google_apis`, x86_64, headless) and in the CI `instrumented` job |
 | Compose + smoke test | all steps | `docker compose up -d --build --wait`, then `scripts/smoke-test.sh`: OTP login, consent, catalog, report (201, then identical resubmit 200), price reads, admin rebuild, logout, account deletion, old token rejected. OTP requests are rate limited, so repeat runs within 15 minutes may fail at the OTP step |
 | Android release / staging builds | n/a | `./gradlew :android:assembleStaging`; `./gradlew :android:assembleRelease -PsokoReleaseBaseUrl=https://host` (R8, keep rules in `android/proguard-rules.pro`) |
-| CI | 5 jobs | `.github/workflows/ci.yml`: `checks` (actionlint, shellcheck, ignore audit), `backend`, `android`, `smoke`, `instrumented`. All five green on GitHub (run 39105149357) |
+| CI | 5 jobs | `.github/workflows/ci.yml`: `checks` (actionlint, shellcheck, ignore audit), `backend`, `android`, `smoke`, `instrumented`. Status: see the CI badge at the top |
 
 A manual test for a real phone is in [`docs/device-test-checklist.md`](docs/device-test-checklist.md).
 
@@ -272,7 +273,7 @@ A manual test for a real phone is in [`docs/device-test-checklist.md`](docs/devi
 - The admin API is closed unless `ADMIN_TOKEN` is set; the token is compared in constant time (SHA-256 digests) and an empty token returns 403 on every admin route.
 - With `DEV_MODE=false` the backend refuses to start unless `JWT_SECRET` and `OTP_SECRET` are non-default and at least 32 characters (`StartupGuardTest`, 10 tests).
 - Release builds forbid cleartext HTTP (`NetworkSecurityConfigTest` and the `verifyReleaseNetworkSecurity` task); debug and staging allow it only for `localhost` and `10.0.2.2`.
-- Phone numbers are never returned to other users, and account deletion clears the Cassandra `user_id` references and the MongoDB documents.
+- Phone numbers are never returned to other users: `PrivacyIT` (`no read endpoint returns another user's phone number`) calls every public and authenticated read endpoint, plus error responses, as an anonymous caller and as a different user and asserts no body contains the first user's number as `07...`, `+254...` or `254...`. Account deletion clears the Cassandra `user_id` references and the MongoDB documents.
 
 ---
 
@@ -300,7 +301,7 @@ PROGRESS.md, DECISIONS.md   what was verified, and why things are the way they a
 - SMS is not wired. The only OTP sender is a console sender, so codes appear in logs in dev mode.
 - No outlier filtering yet: a single bad report can move a median. Flags are stored (`flags_by_report`, `flags_by_user`) but not yet used when computing medians.
 - Not verified: no run on a physical phone (the device checklist is a procedure nobody has executed), the Android app was only walked through once against the live backend (for the screenshots), not with the device checklist, and a build on a different machine has not been done.
-- CI: all five jobs, including the emulator job, passed on GitHub's hosted runners in run 39105149357 (first push). Only that one run exists, so flakiness is unmeasured.
+- CI: the badge at the top shows the current state of all five jobs, including the emulator job, on GitHub's hosted runners. Flakiness is checked by rerunning CI; there is no automated flake tracking.
 - Kiswahili names and the placeholder unit conversions need native-speaker and field review.
 
 ### Data to verify in the field
