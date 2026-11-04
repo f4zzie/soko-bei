@@ -93,7 +93,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-      # docker-compose.yml defaults to DEV_MODE=true and dev-only secrets; nothing real is used in CI.
+      # GitHub's Ubuntu 24.04 runners run a kernel newer than 6.19, which crashes MongoDB 8.x in
+      # the demo image (SERVER-121912). Pin a MongoDB 7.0 image here so the same compose file stays
+      # usable both locally and in CI. 7.0 is otherwise unchanged; the default image remains mongo:8.
+      - name: Pin MongoDB image for the runner kernel
+        run: echo "MONGO_IMAGE=mongo:7.0" >> "$GITHUB_ENV"
       - name: Start Cassandra, MongoDB and the backend
         run: docker compose up -d --build --wait --wait-timeout 300
       - name: Smoke test

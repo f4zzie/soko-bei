@@ -20,7 +20,7 @@ services:
       start_period: 40s
 
   mongodb:
-    image: mongo:8
+    image: ${MONGO_IMAGE:-mongo:8}
     container_name: soko-mongo
     command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
     ports:

@@ -88,7 +88,7 @@ admin_status="$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' -X POST ht
 [[ "$admin_status" == 403 ]] || { echo "Admin API closure check failed: HTTP $admin_status" >&2; exit 1; }
 
 echo 'Opening a PUBLIC HTTPS quick tunnel; anyone with its URL can use dev OTP 000000.'
-cloudflared tunnel --url http://localhost:8080 --no-autoupdate >"$RUN_DIR/cloudflared.log" 2>&1 &
+cloudflared tunnel --url http://localhost:8080 --protocol http2 --no-autoupdate >"$RUN_DIR/cloudflared.log" 2>&1 &
 TUNNEL_PID=$!
 printf '%s\n' "$$" >"$RUN_DIR/demo.pid"
 printf '%s\n' "$TUNNEL_PID" >"$RUN_DIR/tunnel.pid"
