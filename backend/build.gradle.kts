@@ -44,4 +44,7 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     maxHeapSize = "1g"
+    testLogging {
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }

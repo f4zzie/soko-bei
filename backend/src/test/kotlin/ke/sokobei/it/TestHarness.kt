@@ -69,7 +69,9 @@ object TestMongo {
     // starting (and leaking) another dead container and waiting out the driver timeout.
     private val started: Result<String> by lazy {
         runCatching {
-            System.getenv("SOKO_TEST_MONGO") ?: GenericContainer("mongo:8.0").withExposedPorts(27017)
+            System.getenv("SOKO_TEST_MONGO") ?: GenericContainer(System.getenv("MONGO_IMAGE") ?: "mongo:8.0")
+                .withExposedPorts(27017)
+                .withCommand("mongod", "--wiredTigerCacheSizeGB", "0.25")
                 .waitingFor(Wait.forLogMessage(".*Waiting for connections.*", 1))
                 .withStartupAttempts(3)
                 .also { c ->
@@ -168,27 +170,31 @@ fun withEnv(
     tweak: (AppConfig) -> AppConfig = { it },
     block: suspend Env.() -> Unit,
 ) {
+    val mongoCfg = TestMongo.newConfig()
     val cassandra = TestCassandra.newConfig()
     val config = tweak(AppConfig(cassandra = cassandra, mongo = MongoConfig(), devMode = devMode, adminToken = "test-admin", jobsEnabled = false,
         jwtSecret = "test-secret-test-secret-test-secret-1234", reportsPerHour = 10_000, otpRequestsPer15Min = 3))
     val session = CassandraModule.connectAndMigrate(cassandra)
-    val mongoCfg = TestMongo.newConfig()
-    val (mongoClient, mongo) = MongoModule.connect(mongoCfg)
-    MongoModule.prepare(mongo, 30)
-    val clock = MutableClock(clockStart)
-    val sms = CapturingSms()
     try {
-        testApplication {
-            lateinit var services: Services
-            application { services = sokoApp(config, session, mongo, BusinessCalendar(clock), sms) }
-            val client = createClient { install(ContentNegotiation) { json(IT_JSON) } }
-            startApplication()
-            Env(client, services, session, mongo, clock, sms, config).let { env -> kotlinx.coroutines.runBlocking { env.block() } }
+        val (mongoClient, mongo) = MongoModule.connect(mongoCfg)
+        mongoClient.use {
+            try {
+                MongoModule.prepare(mongo, 30)
+                val clock = MutableClock(clockStart)
+                val sms = CapturingSms()
+                testApplication {
+                    lateinit var services: Services
+                    application { services = sokoApp(config, session, mongo, BusinessCalendar(clock), sms) }
+                    val client = createClient { install(ContentNegotiation) { json(IT_JSON) } }
+                    startApplication()
+                    Env(client, services, session, mongo, clock, sms, config).let { env -> kotlinx.coroutines.runBlocking { env.block() } }
+                }
+            } finally {
+                runCatching { kotlinx.coroutines.runBlocking { mongo.drop() } }
+            }
         }
     } finally {
         runCatching { TestCassandra.admin().use { it.execute("DROP KEYSPACE IF EXISTS ${cassandra.keyspace}") } }
         session.close()
-        runCatching { kotlinx.coroutines.runBlocking { mongo.drop() } }
-        mongoClient.close()
     }
 }
