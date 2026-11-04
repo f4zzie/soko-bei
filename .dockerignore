@@ -11,3 +11,10 @@ shared/build
 backend/build
 android
 docs
+soko-bei-demo.*
+demo-up.log
+cloudflared.log
+nohup.out
+soko-bei-seed-headers.*
+*.apk
+*.apk.tmp

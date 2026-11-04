@@ -19,3 +19,9 @@
 *.jks
 *.apk
 *.aab
+/soko-bei-demo.*/
+/demo-up.log
+/cloudflared.log
+/nohup.out
+/soko-bei-seed-headers.*
+/*.apk.tmp

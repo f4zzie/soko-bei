@@ -53,7 +53,7 @@ services:
       DEV_MODE: ${DEV_MODE:-true}
       JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-dev-only-secret}
       OTP_SECRET: ${OTP_SECRET:-dev-only-otp-secret-change-me}
-      ADMIN_TOKEN: ${ADMIN_TOKEN:-dev-admin-token}
+      ADMIN_TOKEN: ${ADMIN_TOKEN-dev-admin-token}
       REPORT_MAX_AGE_DAYS: ${REPORT_MAX_AGE_DAYS:-14}
       JAVA_OPTS: "-Xmx384m"
     ports:

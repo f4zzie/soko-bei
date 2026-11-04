@@ -21,6 +21,12 @@ class HealthReportTest {
     }
 
     @Test
+    fun `health explicitly reports whether dev OTP is enabled`() = runTest {
+        assertEquals("false", healthReport({ "5.0.9" }, {}).field("dev_mode"))
+        assertEquals("true", healthReport({ "5.0.9" }, {}, devMode = true).field("dev_mode"))
+    }
+
+    @Test
     fun `cassandra down gives 503 with a JSON body naming it`() = runTest {
         val r = healthReport({ error("no host available") }, { })
         assertEquals(HttpStatusCode.ServiceUnavailable, r.httpStatus)

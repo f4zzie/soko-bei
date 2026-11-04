@@ -31,7 +31,8 @@ import ke.sokobei.config.MongoConfig
 import ke.sokobei.config.MongoModule
 import org.bson.Document
 import org.testcontainers.cassandra.CassandraContainer
-import org.testcontainers.mongodb.MongoDBContainer
+import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Duration
@@ -64,11 +65,23 @@ object TestCassandra {
 
 /** MongoDB: a Testcontainers container, or an external server when SOKO_TEST_MONGO=mongodb://host:port is set. */
 object TestMongo {
-    private val uri: String by lazy {
-        System.getenv("SOKO_TEST_MONGO") ?: MongoDBContainer("mongo:8").also {
-            it.start(); Runtime.getRuntime().addShutdownHook(Thread { it.stop() })
-        }.replicaSetUrl.substringBefore("/test")
+    // Cached as a Result so a container that fails to start fails every test fast, instead of each test
+    // starting (and leaking) another dead container and waiting out the driver timeout.
+    private val started: Result<String> by lazy {
+        runCatching {
+            System.getenv("SOKO_TEST_MONGO") ?: GenericContainer("mongo:8.0").withExposedPorts(27017)
+                .waitingFor(Wait.forLogMessage(".*Waiting for connections.*", 1))
+                .withStartupAttempts(3)
+                .also { c ->
+                    try { c.start() } catch (e: Exception) {
+                        System.err.println("mongo container failed to start; logs:\n${runCatching { c.logs }.getOrNull()}")
+                        throw e
+                    }
+                    Runtime.getRuntime().addShutdownHook(Thread { c.stop() })
+                }.let { "mongodb://${it.host}:${it.getMappedPort(27017)}" }
+        }
     }
+    private val uri: String get() = started.getOrThrow()
     fun newConfig() = MongoConfig(uri, "t_" + UUID.randomUUID().toString().replace("-", "").take(16))
 }
 
@@ -179,4 +192,3 @@ fun withEnv(
         mongoClient.close()
     }
 }
-

@@ -52,6 +52,7 @@ fun Route.apiRoutes(s: Services, metrics: PrometheusMeterRegistry) {
         val report = healthReport(
             cassandraVersion = { s.db.session.execute("SELECT release_version FROM system.local").one()?.getString(0) },
             mongoPing = { s.mongo.runCommand(org.bson.Document("ping", 1)) },
+            devMode = s.config.devMode,
         )
         call.respond(report.httpStatus, report.body)
     }
@@ -226,12 +227,13 @@ private fun Route.adminRoutes(s: Services) = route("/admin") {
 class HealthReport(val httpStatus: HttpStatusCode, val body: kotlinx.serialization.json.JsonObject)
 
 /** Always yields a JSON body with a per-database status; 200 only when both stores answer, else 503. */
-suspend fun healthReport(cassandraVersion: suspend () -> String?, mongoPing: suspend () -> Unit): HealthReport {
+suspend fun healthReport(cassandraVersion: suspend () -> String?, mongoPing: suspend () -> Unit, devMode: Boolean = false): HealthReport {
     val cassandra = runCatching { cassandraVersion() }
     val mongoUp = runCatching { mongoPing() }.isSuccess
     val healthy = cassandra.isSuccess && mongoUp
     val body = buildJsonObject {
         put("status", if (healthy) "ok" else "degraded")
+        put("dev_mode", devMode)
         put("cassandra", if (cassandra.isSuccess) "up" else "down")
         put("mongodb", if (mongoUp) "up" else "down")
         cassandra.getOrNull()?.let { put("cassandra_version", it) }

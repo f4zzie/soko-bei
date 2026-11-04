@@ -12,6 +12,8 @@ Traders and buyers report what a unit of a commodity (for example a crate of tom
 
 **Try it in one command** (Docker): `docker compose up -d --build --wait`, then `curl -s http://localhost:8080/health`. In dev mode the OTP code `000000` is accepted. Run `scripts/smoke-test.sh` for an end-to-end check.
 
+**Unplugged phone presentation:** run `scripts/demo-up.sh` to seed demo prices, open a public HTTPS tunnel and put a verified staging APK on your Desktop. [Installation, airplane-mode demo and security notes](docs/presenting.md).
+
 ---
 
 ## Contents
@@ -22,6 +24,7 @@ Traders and buyers report what a unit of a commodity (for example a crate of tom
 - [Architecture](#architecture)
 - [Database design](#database-design)
 - [Getting started](#getting-started)
+- [Presenting on a wireless phone](docs/presenting.md)
 - [Testing and quality](#testing-and-quality)
 - [Project structure](#project-structure)
 - [Limitations and roadmap](#limitations-and-roadmap)
@@ -215,7 +218,7 @@ Sources: `.env.example` (compose-level values), `backend/src/main/resources/appl
 | `DEV_MODE` | `false` / `true` | Accepts OTP `000000` and logs OTP codes. Must be `false` in production |
 | `JWT_SECRET` | `change-me-change-me-change-me-change-me` / dev value | JWT signing secret. With `DEV_MODE=false`: non-default and 32+ characters or startup fails |
 | `OTP_SECRET` | `change-me-otp` / dev value | Secret used for OTP hashing. With `DEV_MODE=false`: non-default and 32+ characters or startup fails |
-| `ADMIN_TOKEN` | empty / `dev-admin-token` | Value required in `X-Admin-Token` for admin routes. Empty disables every admin route (403). With `DEV_MODE=false` it must be 32+ characters when set |
+| `ADMIN_TOKEN` | empty / `dev-admin-token` when unset | Value required in `X-Admin-Token` for admin routes. An explicitly empty value disables every admin route (403), including in compose. With `DEV_MODE=false` it must be 32+ characters when set |
 | `REPORT_MAX_AGE_DAYS` | `14` | Reports older than this are rejected |
 | `MIN_PRICE_PER_KG` | `1` | Lower bound on price per kg (KES) |
 | `MAX_PRICE_PER_KG` | `100000` | Upper bound on price per kg (KES) |
@@ -242,7 +245,7 @@ Sources: `.env.example` (compose-level values), `backend/src/main/resources/appl
 
 Errors use the envelope `{"error": {"code", "message", "details"}}`.
 
-`GET /health` always returns a JSON body with a status per database and HTTP 200 only when both Cassandra and MongoDB answer (503 otherwise), for example `{"status":"ok","cassandra":"up","mongodb":"up","cassandra_version":"5.0.9"}`. While the JVM is still starting it is not listening at all, so the compose healthcheck polls `/health` and `--wait` only returns once the backend is ready.
+`GET /health` always returns a JSON body with the effective `dev_mode` and a status per database, and HTTP 200 only when both Cassandra and MongoDB answer (503 otherwise), for example `{"status":"ok","dev_mode":true,"cassandra":"up","mongodb":"up","cassandra_version":"5.0.9"}`. While the JVM is still starting it is not listening at all, so the compose healthcheck polls `/health` and `--wait` only returns once the backend is ready.
 
 ---
 
@@ -259,12 +262,12 @@ BASE_URL=http://localhost:8080 ADMIN_TOKEN=dev-admin-token scripts/smoke-test.sh
 
 | Suite | Count | Notes |
 | --- | --- | --- |
-| Backend unit + integration | 103 | Time, domain, validation, CQL splitter, startup guard, health report, phone-number privacy; integration tests use Testcontainers (Cassandra 5.0, MongoDB 8) or, with `SOKO_TEST_CASSANDRA=host:port` and `SOKO_TEST_MONGO=mongodb://host:port`, existing servers (each test gets its own keyspace and database) |
+| Backend unit + integration | 104 | Time, domain, validation, CQL splitter, startup guard, health/dev-mode report, phone-number privacy; integration tests use Testcontainers (Cassandra 5.0, MongoDB 8) or, with `SOKO_TEST_CASSANDRA=host:port` and `SOKO_TEST_MONGO=mongodb://host:port`, existing servers (each test gets its own keyspace and database) |
 | Android unit / Robolectric | 82 | ViewModels, Room DAOs, SyncWorker, report form, wire format, network security config |
 | Android instrumented | 20 | Room DAO 9, report form 3, SyncWorker 7, cleartext policy 1. Passed on a local API 34 emulator (`google_apis`, x86_64, headless) and in the CI `instrumented` job |
 | Compose + smoke test | all steps | `docker compose up -d --build --wait`, then `scripts/smoke-test.sh`: OTP login, consent, catalog, report (201, then identical resubmit 200), price reads, admin rebuild, logout, account deletion, old token rejected. OTP requests are rate limited, so repeat runs within 15 minutes may fail at the OTP step |
 | Android release / staging builds | n/a | `./gradlew :android:assembleStaging`; `./gradlew :android:assembleRelease -PsokoReleaseBaseUrl=https://host` (R8, keep rules in `android/proguard-rules.pro`) |
-| CI | 5 jobs | `.github/workflows/ci.yml`: `checks` (actionlint, shellcheck, ignore audit), `backend`, `android`, `smoke`, `instrumented`. Status: see the CI badge at the top |
+| CI | 5 jobs | `.github/workflows/ci.yml`: `checks` (shell syntax, ignore audit), `backend`, `android`, `smoke`, `instrumented`. ShellCheck and actionlint are also run locally. Status: see the CI badge at the top |
 
 A manual test for a real phone is in [`docs/device-test-checklist.md`](docs/device-test-checklist.md).
 
@@ -286,8 +289,8 @@ backend/src/test/        unit tests and *IT integration tests (it/TestHarness.kt
 android/                 Compose app: Room cache, report queue, WorkManager sync (see android/NOTES.md)
 android/src/androidTest/ instrumented tests
 shared/                  DTOs and constants shared with clients (ke.sokobei.shared)
-scripts/                 smoke-test.sh, check-ignored-sources.sh
-docs/                    device-test-checklist.md, screenshots/
+scripts/                 demo-up.sh, seed-demo.sh, smoke-test.sh, check-ignored-sources.sh
+docs/                    presenting.md, device-test-checklist.md, screenshots/
 docker-compose.yml       Cassandra 5.0, MongoDB 8, backend
 .github/workflows/       ci.yml
 PROGRESS.md, DECISIONS.md   what was verified, and why things are the way they are

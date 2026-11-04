@@ -82,6 +82,7 @@ class ReportService(
                 locator.insertStatement(ReportLocator(v.reportId, v.commodityId, v.marketId, stored.month, stored.reportedAt, userId, payloadHash(req))),
             ),
         )
+        recompute.recomputeDaily(v.commodityId, v.marketId, calendar.dayOf(reportedAt))
         if (calendar.dayOf(reportedAt) == calendar.today()) recompute.recomputeLatest(v.commodityId, v.marketId)
         onSubmitted(true)
         return SubmitResult(stored, created = true)
