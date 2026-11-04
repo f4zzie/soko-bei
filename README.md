@@ -183,7 +183,7 @@ http://10.0.2.2:8080
 | Build type | Command | Backend URL (Gradle property) | Cleartext HTTP | Notes |
 | --- | --- | --- | --- | --- |
 | `debug` | `./gradlew :android:assembleDebug` | `-PsokoDebugBaseUrl`, default `http://10.0.2.2:8080` | only `localhost` and `10.0.2.2` | emulator |
-| `staging` | `./gradlew :android:assembleStaging` | `-PsokoBaseUrl`, default `http://localhost:8080` | only `localhost` and `10.0.2.2` | inherits `release` (R8, shrinking, keep rules), signed with the debug keystore, application id `ke.sokobei.app.staging` so it installs next to debug. For a real phone: `adb reverse tcp:8080 tcp:8080` |
+| `staging` | `./gradlew :android:assembleStaging` | `-PsokoBaseUrl`, default `http://localhost:8080` | only `localhost` and `10.0.2.2` | inherits `release` (R8, shrinking, keep rules), signed with the debug keystore, application id `ke.sokobei.app.staging` so it installs next to debug. The localhost default needs `adb reverse tcp:8080 tcp:8080`; for wireless HTTPS use the [presentation launcher](docs/presenting.md) |
 | `release` | `./gradlew :android:assembleRelease -PsokoReleaseBaseUrl=https://your.backend` | `-PsokoReleaseBaseUrl`, required | never | the build fails while the URL is still the placeholder `https://api.sokobei.example` or is not `https`. Output is unsigned |
 
 `./gradlew build` assembles debug and staging only; release artifacts are built explicitly so a plain build can never ship the placeholder URL. Release forbidding cleartext is enforced by `NetworkSecurityConfigTest` (unit test) and by the `verifyReleaseNetworkSecurity` Gradle task, which inspects the merged release manifest and runs under `check`.
@@ -215,6 +215,7 @@ Sources: `.env.example` (compose-level values), `backend/src/main/resources/appl
 | `CASSANDRA_MAX_HEAP` / `CASSANDRA_HEAP_NEWSIZE` | `768M` / `128M` | Compose only: Cassandra container heap |
 | `MONGODB_URI` | `mongodb://localhost:27017` | MongoDB connection string (accounts, OTP codes, refresh tokens) |
 | `MONGODB_DATABASE` | `soko_bei` | MongoDB database name |
+| `MONGO_IMAGE` | `mongo:8` in compose; `mongo:8.0` in Testcontainers | MongoDB image override. CI and the verified local presentation use `mongo:7.0` for kernel compatibility; existing data must be compatible with the selected version |
 | `DEV_MODE` | `false` / `true` | Accepts OTP `000000` and logs OTP codes. Must be `false` in production |
 | `JWT_SECRET` | `change-me-change-me-change-me-change-me` / dev value | JWT signing secret. With `DEV_MODE=false`: non-default and 32+ characters or startup fails |
 | `OTP_SECRET` | `change-me-otp` / dev value | Secret used for OTP hashing. With `DEV_MODE=false`: non-default and 32+ characters or startup fails |
@@ -262,7 +263,7 @@ BASE_URL=http://localhost:8080 ADMIN_TOKEN=dev-admin-token scripts/smoke-test.sh
 
 | Suite | Count | Notes |
 | --- | --- | --- |
-| Backend unit + integration | 104 | Time, domain, validation, CQL splitter, startup guard, health/dev-mode report, phone-number privacy; integration tests use Testcontainers (Cassandra 5.0, MongoDB 8) or, with `SOKO_TEST_CASSANDRA=host:port` and `SOKO_TEST_MONGO=mongodb://host:port`, existing servers (each test gets its own keyspace and database) |
+| Backend unit + integration | 104 | Time, domain, validation, CQL splitter, startup guard, health/dev-mode report, phone-number privacy; integration tests use Testcontainers (Cassandra 5.0, MongoDB 8 by default; CI selects MongoDB 7 with `MONGO_IMAGE`) or, with `SOKO_TEST_CASSANDRA=host:port` and `SOKO_TEST_MONGO=mongodb://host:port`, existing servers (each test gets its own keyspace and database) |
 | Android unit / Robolectric | 82 | ViewModels, Room DAOs, SyncWorker, report form, wire format, network security config |
 | Android instrumented | 20 | Room DAO 9, report form 3, SyncWorker 7, cleartext policy 1. Passed on a local API 34 emulator (`google_apis`, x86_64, headless) and in the CI `instrumented` job |
 | Compose + smoke test | all steps | `docker compose up -d --build --wait`, then `scripts/smoke-test.sh`: OTP login, consent, catalog, report (201, then identical resubmit 200), price reads, admin rebuild, logout, account deletion, old token rejected. OTP requests are rate limited, so repeat runs within 15 minutes may fail at the OTP step |
@@ -303,7 +304,7 @@ PROGRESS.md, DECISIONS.md   what was verified, and why things are the way they a
 - Rate limiting for OTP requests and reports is in-memory and per instance. Running several backend instances multiplies the effective limits, and concurrent OTP verifies on different instances can race.
 - SMS is not wired. The only OTP sender is a console sender, so codes appear in logs in dev mode.
 - No outlier filtering yet: a single bad report can move a median. Flags are stored (`flags_by_report`, `flags_by_user`) but not yet used when computing medians.
-- Not verified: no run on a physical phone (the device checklist is a procedure nobody has executed), the Android app was only walked through once against the live backend (for the screenshots), not with the device checklist, and a build on a different machine has not been done.
+- Physical-phone installation and the full device checklist remain unverified. The staging APK has passed live HTTPS emulator checks for online submission, cached offline prices and automatic report sync after airplane mode; see [PROGRESS.md](PROGRESS.md). The presentation launcher has not been tried on a different developer machine.
 - CI: the badge at the top shows the current state of all five jobs, including the emulator job, on GitHub's hosted runners. Flakiness is checked by rerunning CI; there is no automated flake tracking.
 - Kiswahili names and the placeholder unit conversions need native-speaker and field review.
 
