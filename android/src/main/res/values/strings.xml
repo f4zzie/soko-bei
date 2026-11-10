@@ -79,6 +79,10 @@
     <string name="no_trend_data">No trend data for this period.</string>
     <string name="chart_legend">Line: typical price (median) per kg. Shaded area: lowest to highest price reported.</string>
     <string name="chart_description">Price trend for %1$d days. Lowest %2$s, highest %3$s, latest median %4$s Kenya shillings per kilogram.</string>
+    <string name="chart_median_focus">Median focus</string>
+    <string name="chart_full_range">Full range</string>
+    <string name="chart_axis_unit">KES/kg</string>
+    <string name="chart_clipped">Shaded values beyond this scale are clipped. Full range shows every extreme; period low and high below remain unchanged.</string>
     <string name="latest_median">Latest typical price</string>
     <string name="period_low">Lowest in period</string>
     <string name="period_high">Highest in period</string>

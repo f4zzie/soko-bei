@@ -14,7 +14,7 @@ PRUNE=( -path ./.git -o -path ./.gradle -o -path ./.kotlin -o -path ./.idea
 
 list_sources() {
   find . \( "${PRUNE[@]}" \) -prune -o -type f \( \
-      -name '*.kt' -o -name '*.kts' -o -name '*.cql' -o -name '*.xml' -o -name '*.sh' -o -name '*.md' \
+      -name '*.kt' -o -name '*.kts' -o -name '*.cql' -o -name '*.xml' -o -name '*.sh' -o -name '*.py' -o -name '*.md' \
       -o -name '*.toml' -o -name '*.properties' -o -name '*.json' -o -name 'Dockerfile' -o -name '*.yml' \
       -o -name '*.yaml' -o -name '*.pro' -o -name '*.conf' -o -name 'gradlew' -o -name 'gradlew.bat' \
       -o -name '.gitignore' -o -name '.dockerignore' -o -name '.env.example' \) ! -name local.properties -print | sed 's#^\./##' | sort

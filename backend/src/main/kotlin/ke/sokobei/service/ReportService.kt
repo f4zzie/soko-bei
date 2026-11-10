@@ -36,6 +36,7 @@ class ReportService(
     private val byUser: ReportsByUserRepository,
     private val locator: ReportLocatorRepository,
     private val recompute: PriceRecomputeService,
+    private val recomputeOnSubmit: Boolean = true,
     private val onSubmitted: (created: Boolean) -> Unit = {},
 ) {
     suspend fun submit(userId: UUID, req: ReportRequest): SubmitResult {
@@ -82,8 +83,10 @@ class ReportService(
                 locator.insertStatement(ReportLocator(v.reportId, v.commodityId, v.marketId, stored.month, stored.reportedAt, userId, payloadHash(req))),
             ),
         )
-        recompute.recomputeDaily(v.commodityId, v.marketId, calendar.dayOf(reportedAt))
-        if (calendar.dayOf(reportedAt) == calendar.today()) recompute.recomputeLatest(v.commodityId, v.marketId)
+        if (recomputeOnSubmit) {
+            recompute.recomputeDaily(v.commodityId, v.marketId, calendar.dayOf(reportedAt))
+            if (calendar.dayOf(reportedAt) == calendar.today()) recompute.recomputeLatest(v.commodityId, v.marketId)
+        }
         onSubmitted(true)
         return SubmitResult(stored, created = true)
     }

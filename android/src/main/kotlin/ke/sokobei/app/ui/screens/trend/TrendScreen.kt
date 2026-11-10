@@ -22,6 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -42,6 +45,7 @@ import ke.sokobei.app.ui.components.money
 fun TrendScreen(onBack: () -> Unit, vm: TrendViewModel = hiltViewModel()) {
     val s by vm.state.collectAsStateWithLifecycle()
     val sw = isSwahili()
+    var focusMedian by rememberSaveable { mutableStateOf(true) }
     val title = s.commodityName?.let { (en, swName) -> if (sw && swName.isNotBlank()) swName else en } ?: stringResource(R.string.trend)
     Scaffold(
         topBar = {
@@ -76,7 +80,13 @@ fun TrendScreen(onBack: () -> Unit, vm: TrendViewModel = hiltViewModel()) {
                 val high = points.maxOf { it.maxPerKg }
                 val last = points.last()
                 val description = stringResource(R.string.chart_description, s.days, money(low), money(high), money(last.medianPerKg))
-                TrendChart(points, description, Modifier.testTag("trend_chart"))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    FilterChip(selected = focusMedian, onClick = { focusMedian = true },
+                        label = { Text(stringResource(R.string.chart_median_focus)) }, modifier = Modifier.heightIn(min = MinTouch).testTag("scale_median"))
+                    FilterChip(selected = !focusMedian, onClick = { focusMedian = false },
+                        label = { Text(stringResource(R.string.chart_full_range)) }, modifier = Modifier.heightIn(min = MinTouch).testTag("scale_full"))
+                }
+                TrendChart(points, description, Modifier.testTag("trend_chart"), focusMedian = focusMedian)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(points.first().day, style = MaterialTheme.typography.bodySmall)
                     Text(points.last().day, style = MaterialTheme.typography.bodySmall)

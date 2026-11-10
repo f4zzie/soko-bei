@@ -7,6 +7,7 @@
 /android/build/
 /.kotlin/
 /.last-test-results/
+/scripts/__pycache__/
 
 # IDE
 .idea/

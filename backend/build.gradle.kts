@@ -7,7 +7,7 @@ plugins {
 kotlin { jvmToolchain(21) }
 
 application {
-    mainClass.set("io.ktor.server.netty.EngineMain")
+    mainClass.set("ke.sokobei.MainKt")
 }
 
 dependencies {

@@ -90,4 +90,28 @@ class OtherPureLogicTest {
         assertEquals(listOf(0.5f), one.xs)
         assertNotNull(one.medianYs.single())
     }
+
+    @Test fun median_focus_exposes_the_trend_while_full_range_retains_extreme_reports() {
+        val points = listOf(tp("70", "80", "90"), tp("85", "100", "1500"), tp("110", "130", "140"))
+        val full = chartGeometry(points)!!
+        val focus = chartGeometry(points, focusMedian = true)!!
+        assertEquals(1500f, full.maxValue)
+        assertFalse(full.clipped)
+        assertTrue(focus.clipped)
+        assertTrue(focus.medianYs.max() - focus.medianYs.min() > .7f)
+        assertTrue(full.medianYs.max() - full.medianYs.min() < .05f)
+        assertTrue((focus.minYs + focus.medianYs + focus.maxYs).all { it in 0f..1f })
+        assertEquals(0f, focus.maxYs[1], 1e-6f)
+        assertEquals(BigDecimal("1500"), points[1].maxPerKg)
+        val flat = chartGeometry(listOf(tp("50", "50", "50")), focusMedian = true)!!
+        assertEquals(.5f, flat.medianYs.single(), 1e-6f)
+    }
+
+    @Test fun chart_spacing_represents_missing_calendar_days() {
+        val points = listOf("2026-09-01", "2026-09-02", "2026-09-10").map { tp("40", "50", "60").copy(day = it) }
+        val chart = chartGeometry(points)!!
+        assertEquals(0f, chart.xs[0], 1e-6f)
+        assertEquals(1f / 9, chart.xs[1], 1e-6f)
+        assertEquals(1f, chart.xs[2], 1e-6f)
+    }
 }

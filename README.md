@@ -14,6 +14,8 @@ Traders and buyers report what a unit of a commodity (for example a crate of tom
 
 **Unplugged phone presentation:** run `scripts/demo-up.sh` to seed demo prices, open a public HTTPS tunnel and put a verified staging APK on your Desktop. [Installation, airplane-mode demo and security notes](docs/presenting.md).
 
+**Large presentation dataset:** the optional [live-demo loader](docs/presenting.md#large-dataset-on-an-already-running-demo) adds a roughly **80,000-report, 90-day** scenario across **15 Kenyan markets and 18 commodities**, with 40 synthetic accounts, varied units/grades, seasonal changes, short shocks and about 1% price-entry outliers. **Every generated price is demo data, not an observed Kenyan market price.** The catalog extension and server-side history command require `DEV_MODE=true`; production migrations remain the original five-market/ten-commodity catalog. Today's board and the optional 20–40-second live trickle use the real public API and its normal per-user quotas.
+
 ---
 
 ## Contents
@@ -263,12 +265,14 @@ BASE_URL=http://localhost:8080 ADMIN_TOKEN=dev-admin-token scripts/smoke-test.sh
 
 | Suite | Count | Notes |
 | --- | --- | --- |
-| Backend unit + integration | 104 | Time, domain, validation, CQL splitter, startup guard, health/dev-mode report, phone-number privacy; integration tests use Testcontainers (Cassandra 5.0, MongoDB 8 by default; CI selects MongoDB 7 with `MONGO_IMAGE`) or, with `SOKO_TEST_CASSANDRA=host:port` and `SOKO_TEST_MONGO=mongodb://host:port`, existing servers (each test gets its own keyspace and database) |
-| Android unit / Robolectric | 82 | ViewModels, Room DAOs, SyncWorker, report form, wire format, network security config |
+| Backend unit + integration | 109 | Time, domain, validation, CQL splitter, startup guard, health/dev-mode report, phone-number privacy, demo generation and exact backfill replay; integration tests use Testcontainers (Cassandra 5.0, MongoDB 8 by default; CI selects MongoDB 7 with `MONGO_IMAGE`) or, with `SOKO_TEST_CASSANDRA=host:port` and `SOKO_TEST_MONGO=mongodb://host:port`, existing servers (each test gets its own keyspace and database) |
+| Android unit / Robolectric | 84 | ViewModels, Room DAOs, SyncWorker, report form, wire format, network security config, median-focus and sparse-calendar chart geometry |
 | Android instrumented | 20 | Room DAO 9, report form 3, SyncWorker 7, cleartext policy 1. Passed on a local API 34 emulator (`google_apis`, x86_64, headless) and in the CI `instrumented` job |
 | Compose + smoke test | all steps | `docker compose up -d --build --wait`, then `scripts/smoke-test.sh`: OTP login, consent, catalog, report (201, then identical resubmit 200), price reads, admin rebuild, logout, account deletion, old token rejected. OTP requests are rate limited, so repeat runs within 15 minutes may fail at the OTP step |
 | Android release / staging builds | n/a | `./gradlew :android:assembleStaging`; `./gradlew :android:assembleRelease -PsokoReleaseBaseUrl=https://host` (R8, keep rules in `android/proguard-rules.pro`) |
-| CI | 5 jobs | `.github/workflows/ci.yml`: `checks` (shell syntax, ignore audit), `backend`, `android`, `smoke`, `instrumented`. ShellCheck and actionlint are also run locally. Status: see the CI badge at the top |
+| CI | 5 jobs | `.github/workflows/ci.yml`: `checks` (shell syntax, demo feeder tests, ignore audit), `backend`, `android`, `smoke`, `instrumented`. Backend, Android and instrumented test reports upload on both success and failure. ShellCheck and actionlint are also run locally. Status: see the CI badge at the top |
+
+The large-demo regression checks are `DemoScenarioTest`, `DemoBackfillIT`, and `python3 -m unittest discover -s scripts -p 'test_demo_feed.py' -v`. They cover production refusal, deterministic report identity/shape, API age-boundary isolation, normalization, daily medians, account/catalog preservation, shared quotas and retry identity. The Python checks also run in CI's `checks` job.
 
 A manual test for a real phone is in [`docs/device-test-checklist.md`](docs/device-test-checklist.md).
 
@@ -290,7 +294,7 @@ backend/src/test/        unit tests and *IT integration tests (it/TestHarness.kt
 android/                 Compose app: Room cache, report queue, WorkManager sync (see android/NOTES.md)
 android/src/androidTest/ instrumented tests
 shared/                  DTOs and constants shared with clients (ke.sokobei.shared)
-scripts/                 demo-up.sh, seed-demo.sh, smoke-test.sh, check-ignored-sources.sh
+scripts/                 demo-up.sh, seed-demo.sh, demo-{catalog,backfill,today,trickle}.sh, smoke-test.sh, checks
 docs/                    presenting.md, device-test-checklist.md, screenshots/
 docker-compose.yml       Cassandra 5.0, MongoDB 8, backend
 .github/workflows/       ci.yml
@@ -310,7 +314,7 @@ PROGRESS.md, DECISIONS.md   what was verified, and why things are the way they a
 
 ### Data to verify in the field
 
-All unit conversion factors are placeholders except the `kg` unit, which is exact (`kg_per_unit = 1`). The source is `backend/src/main/resources/cql/V002__seed.cql`, which has 26 factors marked `verified = false`:
+In the original production seed, unit conversion factors are placeholders except the `kg` unit, which is exact (`kg_per_unit = 1`). The source is `backend/src/main/resources/cql/V002__seed.cql`, which has 26 factors marked `verified = false`:
 
 | Commodity | Unverified factors (kg per unit) |
 | --- | --- |
@@ -324,6 +328,19 @@ All unit conversion factors are placeholders except the `kg` unit, which is exac
 | Bananas | bunch 15, piece 0.15 |
 | Rice | gorogoro 2.0, bag_50kg 50, bag_90kg 90 |
 | Carrots | crate 50, bag_50kg 50, debe 16 |
+
+The opt-in demo extension in `backend/src/main/kotlin/ke/sokobei/demo/DemoCatalog.kt` adds the following **25 version-1 factors, all marked `verified = false`**, including its kg identity rows. Default units are shown in bold. Each new commodity accepts `standard`, `grade_a` and `grade_c`. These are demonstration grades and container weights, not field specifications.
+
+| Demo commodity (English / Kiswahili) | Unverified factors (kg per unit) |
+| --- | --- |
+| Avocados / Parachichi | kg 1, **crate 20**, bag_50kg 50, piece 0.2 |
+| Mangoes / Maembe | kg 1, **crate 25**, piece 0.3 |
+| Green grams / Ndengu | **kg 1**, gorogoro 2, debe 16, bag_90kg 90 |
+| Sweet potatoes / Viazi vitamu | kg 1, **bag_50kg 50**, debe 18 |
+| Garlic / Vitunguu saumu | **kg 1**, bag_10kg 10 |
+| Ginger / Tangawizi | **kg 1**, bag_25kg 25, crate 20 |
+| Watermelons / Matikiti maji | kg 1, **piece 5**, crate 40 |
+| Spinach / Spinachi | kg 1, **bunch 0.3**, bag_50kg 50 |
 
 Until these are checked, per-kg prices for those units are only as good as the placeholder. Changing a factor creates a new `commodity_units` version; past reports keep the `conversion_version` they were stored with.
 

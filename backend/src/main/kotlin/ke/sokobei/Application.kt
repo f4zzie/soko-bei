@@ -54,7 +54,12 @@ class Services(
     val calendar: BusinessCalendar,
     sms: SmsSender,
     val metrics: PrometheusMeterRegistry,
+    deferReportRecompute: Boolean = false,
+    preserveDerivedRows: Boolean = false,
 ) {
+    init {
+        require(config.devMode || (!deferReportRecompute && !preserveDerivedRows)) { "Demo write options require DEV_MODE=true" }
+    }
     val markets = MarketRepository(db)
     val commodities = CommodityRepository(db)
     val units = CommodityUnitRepository(db)
@@ -71,12 +76,13 @@ class Services(
     private val jobState = JobStateRepository(db)
 
     val tokens = TokenService(config)
-    val recompute = PriceRecomputeService(db, calendar, reports, markets, commodities, latestByCommodity, latestByMarket, dailyStats)
+    val recompute = PriceRecomputeService(db, calendar, reports, markets, commodities, latestByCommodity, latestByMarket, dailyStats, preserveDerivedRows)
     val trends = TrendService(calendar, dailyStats)
     val auth = AuthService(config, calendar, tokens, users, otps, refreshTokens, sms, SlidingWindowLimiter { calendar.now() })
     val reportService = ReportService(
         db, calendar, ReportValidator(config.reportMaxAgeDays, config.minPricePerKg, config.maxPricePerKg), config.consentVersion,
         users, markets, commodities, units, reports, byUser, locator, recompute,
+        recomputeOnSubmit = !deferReportRecompute,
         onSubmitted = { created -> metrics.counter("soko_reports_submitted_total", "created", created.toString()).increment() },
     )
     val flags = FlagService(calendar, locator, flagRepo)

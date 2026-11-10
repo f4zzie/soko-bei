@@ -38,13 +38,86 @@ Staging uses `ke.sokobei.app.staging` and the debug keystore. Reinstallation fro
 - Check the phone shows seeded market prices and a trend. Confirm both offline reports become Synced after reconnecting.
 - Avoid unnecessary OTP requests (three per number per 15 minutes) and repeated live submissions (30 per user per hour). Use your own demo login rather than the seeder's five accounts.
 
+## Large dataset on an already-running demo
+
+Use this sequence **without rerunning `demo-up.sh`**: keep the existing launcher, Cloudflare connector and APK URL. The helpers below use the running backend container and never restart the tunnel, recreate databases or build an APK. Keep the current demo's `MONGO_IMAGE=mongo:7.0` setting. Python 3 (standard library only) is required for the API feeders.
+
+1. **Back up before the first load.** Record the snapshot tag and keep the Mongo archive outside the repository:
+
+   ```sh
+   umask 077
+   tag="soko-bei-before-large-demo-$(date +%Y%m%dT%H%M%S)"
+   backup="$HOME/.local/state/soko-bei/backups/$tag"
+   mkdir -p "$backup"
+   docker exec soko-cassandra nodetool snapshot -t "$tag" soko_bei
+   docker exec soko-mongo mongodump --db soko_bei --archive --gzip > "$backup/mongodb.archive.gz"
+   gzip -t "$backup/mongodb.archive.gz"
+   ```
+
+   Cassandra retains the snapshot under `/var/lib/cassandra/data/soko_bei/<table>/snapshots/<tag>/` in its existing volume. Copy those directories to the host for a separate backup, and record hashes plus the original report IDs/rows before loading. A snapshot integrity check is not a restoration rehearsal. The actual independently archived backup and preservation evidence for this demo are recorded in [PROGRESS.md](../PROGRESS.md).
+
+2. **Use a backend containing the demo commands.** If upgrading an older backend image, deploy only that service:
+
+   ```sh
+   MONGO_IMAGE=mongo:7.0 ADMIN_TOKEN='' docker compose up -d --no-deps --build backend
+   ```
+
+   This permits a brief backend outage while leaving the connector and URL intact. Verify `curl -fsS "$BASE_URL/health"` through the existing tunnel afterwards. No backend restart is needed between catalog loading, backfilling and API feeding.
+
+3. **Extend the catalog and load past history.** Commands default to `BACKEND_CONTAINER=soko-backend`; each command checks the effective backend `DEV_MODE=true` before connecting/writing. No migration runs in these commands.
+
+   ```sh
+   scripts/demo-catalog.sh
+   scripts/demo-backfill.sh --days 90 --seed 42 --concurrency 2 --batch-size 64
+   ```
+
+   The ten added markets are Gikomba, Muthurwa and Kangemi (Nairobi), Githurai 45 (Kiambu), Karatina (Nyeri), Daraja Mbili (Kisii), Eldoret Main (Uasin Gishu), Kitale Municipal (Trans Nzoia), Gakoromone (Meru), and Machakos Main (Machakos). Coordinates are approximate. The eight new bilingual commodities, grades and placeholder weights are listed in [README's field-data table](../README.md#data-to-verify-in-the-field).
+
+   `--days 90` selects the inclusive 90-day EAT window ending today, with **89 completed days written server-side**; today is reserved for step 4. `--through YYYY-MM-DD` pins the ending date for a repeatable range; it cannot be in the future. IDs and payloads depend on dataset version, seed, EAT date, market, commodity and ordinal, rather than the run time. Replaying the same dates/catalog/seed reports `created=0` and preserves source rows. A later rolling run adds only the new date's IDs; it does not remove older history. Keep seed 42 for this dataset. `--markets wakulima,karatina` is useful for a small two-market run; `--days 4` gives three past days plus today.
+
+   To replay this presentation's completed history on a later date, pin **89 days ending 2026-11-04**: `scripts/demo-backfill.sh --days 89 --through 2026-11-04 --seed 42`. That range is 2026-08-08–2026-11-04. An end date equal to the current day is excluded from history only while it is still today; use an already-completed ending date when exact later replay is required.
+
+   History uses the API's `ReportService`, validator, unit factors/version snapshots, deterministic timeuuids, and logged source/user/locator write batch. Only the separately guarded CLI widens the age window; HTTP still rejects new reports over 14 days old. Defaults are at most two reports in flight and 64 queued per batch (allowed maxima: four and 128). Each date prints progress, followed by a full-range in-process rebuild using the existing recompute service; the demo rebuild does not remove existing rows. The admin HTTP API remains closed.
+
+   The 40 synthetic accounts are `0700002000`–`0700002039`, created through dev OTP verification and normal consent handling. The loader refuses to adopt a pre-existing, unmarked account in that range. Mongo's demo-only `demo_large_users` collection keeps their identities stable across interrupted runs. No SMS is sent.
+
+4. **Fill today's board through the public API.** Set `BASE_URL` to the **already-running** HTTPS tunnel URL printed by the original launcher; never commit its concrete value.
+
+   ```sh
+   export BASE_URL='https://<existing-tunnel-host>'
+   scripts/demo-today.sh
+   ```
+
+   The backend creates a deterministic current-day plan, then the script posts it through HTTPS. It includes a synthetic opening-board sample for each of the 270 market/commodity pairs, followed by market-hour trades whose timestamps have already elapsed today, capped at 1,000 posts (at most 25 per account). The opening board is deliberately available just after midnight EAT so a late-night presentation can still show every commodity. Price levels, grades and units come from the same scenario as the history. This is generated demo data, including the early-hours samples.
+
+   Both feeders require healthy public `dev_mode=true`. Tokens stay in memory. Successful today IDs and conservative per-user hourly attempt budgets are checkpointed outside the repository under `${XDG_STATE_HOME:-$HOME/.local/state}/soko-bei/demo-feed/`. Reruns skip completed IDs; an interrupted request reuses its report ID. Keep this shared state when restarting feeders. Server 429/`Retry-After` is authoritative; the script waits rather than raising quotas. `--reports-per-hour N` can lower its local budget if the backend uses less than 30. Do not run the old small seeder as part of this sequence.
+
+5. **Rehearse and start the live trickle.** Refresh Markets in the app; scroll through all commodities, compare a commodity across 15 markets, and choose **90 days** on its trend. My reports is the device's local submission history, so it retains that phone's reports rather than displaying the 40 server-side users' history.
+
+   On the updated chart, **Median focus** keeps seasonal movement and short shocks readable even with extra-zero reports. The numeric axis is KES/kg; a notice identifies clipped shaded extremes. **Full range** restores every minimum/maximum to the plot, and the period low/high labels always retain the true values. Missing dates occupy their actual calendar spacing. The chart change was prompted by the observed 90-day display; it does not filter reports or alter prices.
+
+   ```sh
+   scripts/demo-trickle.sh --duration 3600
+   ```
+
+   Omit `--duration` to run until Ctrl+C. The first report is posted immediately, then one every randomly selected 20–40 seconds; rate-limit waits and network retries can lengthen an interval. The script rotates across the 40 demo accounts and preserves the same report ID on a retry. Stopping it leaves the backend and tunnel running. A detached invocation can redirect its output to a private log outside the repository and be stopped with `kill -TERM <trickle-PID>`. Across EAT midnight, automatic plans refresh for the new date; rerun `demo-today.sh` to fill the new board. `--plan /path/to/current-plan.json` reuses a saved plan but deliberately refuses it after its date changes.
+
+6. **Optional operational check before presenting:** run the normal daily stats and reconciliation jobs once, in-process, with durations printed:
+
+   ```sh
+   docker exec soko-backend /app/bin/backend demo-jobs
+   docker exec soko-cassandra nodetool tablestats soko_bei
+   ```
+
+   Refresh the app after this check. Leave enough time for history loading and its aggregate rebuild before starting the presentation; today's API feed then gives the latest cards real receipt times. Keep the laptop awake and the original tunnel online throughout.
+
 ## Five-minute walkthrough
 
 | Time | Action |
 | --- | --- |
 | 0:00–0:45 | Browse Wakulima Market. Explain today's typical price, latest report and number of reports. Say these are demo prices. |
-| 0:45–1:20 | Tap Tomatoes and compare it across the five markets. |
-| 1:20–1:50 | Open its price trend. Historical demo reports span the last 12 Nairobi calendar days. |
+| 0:45–1:20 | Tap Tomatoes and compare it across 15 markets with the large dataset (five with the small seed). |
+| 1:20–1:50 | Open its price trend and choose 90 days. Use Median focus to show seasonal movement and a short shock, then Full range to reveal the outliers; the small seed instead covers 12 days. |
 | 1:50–2:40 | Report a price: Wakulima, Tomatoes, standard, crate, quantity 1, KES 4500. Show the live **KES 75.00/kg** preview and mention the placeholder 60 kg/crate factor. Save; show Synced in My reports. |
 | 2:40–3:40 | Turn airplane mode on **and Wi-Fi off**. Save two different prices (for example 4800 and 5100). Show both Pending and the cached market data. |
 | 3:40–4:35 | Reconnect, restore the hotspot if used, and watch both become Synced. Allow up to a minute; transient tunnel errors retry with backoff. |

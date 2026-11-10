@@ -74,6 +74,10 @@
     <string name="no_trend_data">Hakuna data ya mwenendo kwa kipindi hiki.</string>
     <string name="chart_legend">Mstari: bei ya kawaida (wastani wa kati) kwa kilo. Eneo lenye kivuli: bei ya chini hadi ya juu zaidi iliyoripotiwa.</string>
     <string name="chart_description">Mwenendo wa bei kwa siku %1$d. Ya chini zaidi %2$s, ya juu zaidi %3$s, wastani wa hivi karibuni %4$s shilingi za Kenya kwa kilo.</string>
+    <string name="chart_median_focus">Bei ya kati</string>
+    <string name="chart_full_range">Wigo wote</string>
+    <string name="chart_axis_unit">KES/kilo</string>
+    <string name="chart_clipped">Kivuli kimekatwa kwenye mipaka ya kipimo hiki. Wigo wote unaonyesha bei zote; bei ya chini na ya juu hapa chini hazijabadilika.</string>
     <string name="latest_median">Bei ya kawaida ya hivi karibuni</string>
     <string name="period_low">Ya chini zaidi katika kipindi</string>
     <string name="period_high">Ya juu zaidi katika kipindi</string>

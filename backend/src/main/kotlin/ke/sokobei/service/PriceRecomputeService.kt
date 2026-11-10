@@ -31,6 +31,7 @@ class PriceRecomputeService(
     private val latestByCommodity: LatestPriceByCommodityRepository,
     private val latestByMarket: LatestPriceByMarketRepository,
     private val dailyStats: DailyStatsRepository,
+    private val preserveExistingRows: Boolean = false,
 ) {
     private val locks = ConcurrentHashMap<String, Mutex>()
     private fun lock(c: String, m: String) = locks.computeIfAbsent("$c|$m") { Mutex() }
@@ -55,7 +56,7 @@ class PriceRecomputeService(
                     add(latestByMarket.upsertStatement(LatestPriceByMarketRepository.Row(marketId, commodityId, s.grade,
                         commodity.nameEn, commodity.nameSw, s.median, s.last, s.count, now)))
                 }
-                for (g in existing - stats.map { it.grade }.toSet()) {
+                for (g in if (preserveExistingRows) emptySet() else existing - stats.map { it.grade }.toSet()) {
                     add(latestByCommodity.deleteStatement(commodityId, marketId, g))
                     add(latestByMarket.deleteStatement(marketId, commodityId, g))
                 }
@@ -69,7 +70,8 @@ class PriceRecomputeService(
         lock(commodityId, marketId).withLock {
             val stats = statsByGrade(readDay(commodityId, marketId, day))
             val now = calendar.now()
-            val stale = dailyStats.gradesForDay(commodityId, marketId, day).toSet() - stats.map { it.grade }.toSet()
+            val stale = if (preserveExistingRows) emptySet() else
+                dailyStats.gradesForDay(commodityId, marketId, day).toSet() - stats.map { it.grade }.toSet()
             val statements = stats.map { s ->
                 dailyStats.upsertStatement(DailyStat(commodityId, marketId, day, s.grade, s.min, s.median, s.max, s.count), now)
             } + stale.map { dailyStats.deleteStatement(commodityId, marketId, day, it) }

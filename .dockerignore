@@ -9,6 +9,7 @@ local.properties
 build
 shared/build
 backend/build
+scripts/__pycache__
 android
 docs
 soko-bei-demo.*
