@@ -13,8 +13,8 @@
 set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
-ADMIN_TOKEN="${ADMIN_TOKEN:-dev-admin-token}"
-PHONE="0712345678"
+ADMIN_TOKEN="${ADMIN_TOKEN-dev-admin-token}"
+PHONE="${SMOKE_PHONE:-0712345678}"
 OTP_CODE="000000"
 MARKET="wakulima"
 COMMODITY="tomatoes"
@@ -214,10 +214,14 @@ YESTERDAY_EAT="$(TZ=Africa/Nairobi date -d "$TODAY_EAT -1 day" +%F)"
 
 STEP="admin rebuild"
 http_call POST "/v1/admin/rebuild?from=$YESTERDAY_EAT&to=$TODAY_EAT" -H "X-Admin-Token: $ADMIN_TOKEN"
-expect_status "$STEP" "200"
-pass "$STEP ($YESTERDAY_EAT..$TODAY_EAT)"
-
-check_prices "after rebuild"
+if [[ -n "$ADMIN_TOKEN" ]]; then
+  expect_status "$STEP" "200"
+  pass "$STEP ($YESTERDAY_EAT..$TODAY_EAT)"
+  check_prices "after rebuild"
+else
+  expect_status "$STEP" "403"
+  pass "admin disabled (HTTP 403)"
+fi
 
 # ---------------------------------------------------------------------------
 # 8. Logout, delete account, confirm old token is dead

@@ -1,0 +1,80 @@
+services:
+  cassandra:
+    image: cassandra:5.0
+    container_name: soko-cassandra
+    environment:
+      CASSANDRA_CLUSTER_NAME: soko-bei
+      CASSANDRA_DC: datacenter1
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      MAX_HEAP_SIZE: 1G
+      CASSANDRA_NUM_TOKENS: "16"
+      JVM_OPTS: "-Xms1G -Xmx1G"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+      - ./cassandra.yaml:/opt/cassandra/conf/cassandra.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 60
+      start_period: 90s
+    restart: unless-stopped
+    mem_limit: 2200m
+
+  mongodb:
+    image: mongo:7.0
+    container_name: soko-mongo
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.5"]
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' | grep -q 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 40
+    restart: unless-stopped
+    mem_limit: 800m
+
+  backend:
+    image: sokobei-backend:ec2
+    container_name: soko-backend
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: soko_bei
+      CASSANDRA_CONTACT_POINTS: cassandra:9042
+      CASSANDRA_LOCAL_DC: datacenter1
+      CASSANDRA_KEYSPACE: soko_bei
+      CASSANDRA_REPLICATION: datacenter1:1
+      DEV_MODE: "true"
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      OTP_SECRET: ${OTP_SECRET:?set OTP_SECRET}
+      ADMIN_TOKEN: ""
+      REPORT_MAX_AGE_DAYS: "14"
+      JAVA_OPTS: "-Xmx512m -XX:MaxMetaspaceSize=256m"
+    networks:
+      default: {}
+      agri_app_default:
+        aliases:
+          - soko-backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 80
+      start_period: 60s
+    restart: unless-stopped
+    mem_limit: 1000m
+
+volumes:
+  cassandra-data:
+  mongo-data:
+
+networks:
+  default: {}
+  agri_app_default:
+    external: true

@@ -1,0 +1,14 @@
+[Unit]
+Description=Refresh generated Soko Bei demo prices through HTTPS
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/soko-bei
+Environment=BASE_URL=https://sokobei.duckdns.org
+ExecStart=/usr/bin/python3 scripts/demo_feed.py today --duration 2700
+TimeoutStartSec=50min
+Nice=10

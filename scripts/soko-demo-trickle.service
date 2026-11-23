@@ -1,0 +1,18 @@
+[Unit]
+Description=Live generated Soko Bei demo reports through HTTPS
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/soko-bei
+Environment=BASE_URL=https://sokobei.duckdns.org
+ExecStart=/usr/bin/python3 scripts/demo_feed.py trickle
+Restart=on-failure
+RestartSec=120
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

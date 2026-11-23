@@ -2,7 +2,28 @@
 
 **These prices are seeded demo data, not real market observations. All non-kg unit conversion factors are still unverified placeholders.** A crate-to-kg calculation demonstrates the software, not a field-verified weight.
 
-## Start the demo
+## Current EC2 presentation
+
+The current Desktop APK uses **https://sokobei.duckdns.org**, hosted on EC2 with
+the existing AgriTrack Caddy proxy. Use `/home/arch/Desktop/soko-bei-staging.apk`;
+the laptop does not need to stay awake, run Docker, or keep a tunnel open. See
+[the EC2 deployment guide](deploy-ec2.md) for operations and verification.
+
+Before presenting, check `/health`, refresh Markets on the phone, inspect a
+90-day trend, and rehearse the offline reports below. EC2 generates demo prices;
+these are not live agricultural observations. Its hourly refresh timer and
+supervised trickle keep the new EAT day's board populated.
+
+Install the APK as described below and use OTP **000000**. Do not run
+`scripts/demo-up.sh` for this EC2 APK: that is a separate local fallback which
+replaces the Desktop APK with a temporary tunnel build. The laptop/hotspot and
+tunnel-lifetime instructions below apply only to that fallback, not to EC2.
+
+The public EC2 server remains in `DEV_MODE=true`: use synthetic numbers only.
+Its admin API is disabled. Disable demo feeders or stop the Soko stack after the
+presentation when no longer needed; leave AgriTrack and its Caddy running.
+
+## Local tunnel fallback: start the demo
 
 From the repository root, as your normal desktop user:
 

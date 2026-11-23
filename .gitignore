@@ -16,6 +16,7 @@
 # Local / secret files: never commit
 /local.properties
 .env
+.env.ec2
 *.keystore
 *.jks
 *.apk
